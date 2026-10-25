@@ -1,0 +1,57 @@
+{
+    "loader_kwargs": {
+        "model_prompts": {
+            "Retrieval-query": "\u691c\u7d22\u30af\u30a8\u30ea: ",
+            "Retrieval-document": "\u691c\u7d22\u6587\u66f8: ",
+            "Reranking-query": "\u691c\u7d22\u30af\u30a8\u30ea: ",
+            "Reranking-document": "\u691c\u7d22\u6587\u66f8: ",
+            "Classification": "\u30c8\u30d4\u30c3\u30af: ",
+            "Clustering": "\u30c8\u30d4\u30c3\u30af: "
+        }
+    },
+    "name": "cl-nagoya/ruri-v3-310m",
+    "revision": "18b60fb8c2b9df296fb4212bb7d23ef94e579cd3",
+    "release_date": "2025-04-09",
+    "languages": [
+        "jpn-Jpan"
+    ],
+    "n_parameters": 314611968,
+    "n_active_parameters_override": null,
+    "n_embedding_parameters": 78643200,
+    "memory_usage_mb": 1200.0,
+    "max_tokens": 8192.0,
+    "embed_dim": 768,
+    "license": "apache-2.0",
+    "open_weights": true,
+    "public_training_code": null,
+    "public_training_data": "https://huggingface.co/datasets/cl-nagoya/ruri-v3-dataset-ft",
+    "framework": [
+        "PyTorch",
+        "Sentence Transformers",
+        "safetensors"
+    ],
+    "reference": "https://huggingface.co/cl-nagoya/ruri-v3-310m",
+    "similarity_fn_name": "cosine",
+    "use_instructions": true,
+    "training_datasets": [
+        "MrTidyRetrieval",
+        "MIRACLRetrieval"
+    ],
+    "adapted_from": "sbintuitions/modernbert-ja-310m",
+    "superseded_by": null,
+    "modalities": [
+        "text"
+    ],
+    "model_type": [
+        "dense"
+    ],
+    "citation": "@misc{Ruri,\n  title={{Ruri: Japanese General Text Embeddings}},\n  author={Hayato Tsukagoshi and Ryohei Sasano},\n  year={2024},\n  eprint={2409.07737},\n  archivePrefix={arXiv},\n  primaryClass={cs.CL},\n  url={https://arxiv.org/abs/2409.07737},\n}",
+    "contacts": [
+        "hpprc"
+    ],
+    "experiment_kwargs": null,
+    "output_dtypes": null,
+    "extra_requirements_groups": null,
+    "loader": "SentenceTransformerEncoderWrapper",
+    "is_cross_encoder": false
+}

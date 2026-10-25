@@ -1,0 +1,16 @@
+[project]
+name = "eg2-playground"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "librosa>=1.0.0",
+    "mteb>=2.26.21",
+    "pillow>=13.0.0",
+    "sentence-transformers>=6.2.0",
+    "soundfile>=0.14.0",
+    "torch>=2.14.1",
+    "torchaudio>=2.11.0",
+    "torchcodec>=0.17.0",
+    "torchvision>=0.29.1",
+    "transformers>=5.20.2",
+]
