@@ -1,0 +1,59 @@
+mem text: params=271M after_load maxrss=1.37GB mps_alloc=0.50GB mps_driver=1.09GB
+mem text: after_encode(16x512tok) maxrss=1.37GB mps_alloc=0.50GB mps_driver=2.23GB
+mem text+image: params=439M after_load maxrss=1.33GB mps_alloc=0.82GB mps_driver=1.44GB
+mem text+image: after_encode(16x512tok) maxrss=1.33GB mps_alloc=0.82GB mps_driver=2.57GB
+mem text+audio: params=577M after_load maxrss=1.33GB mps_alloc=1.07GB mps_driver=1.09GB
+mem text+audio: after_encode(16x512tok) maxrss=1.33GB mps_alloc=1.07GB mps_driver=3.26GB
+mem full: params=744M after_load maxrss=1.31GB mps_alloc=1.39GB mps_driver=1.44GB
+mem full: after_encode(16x512tok) maxrss=1.31GB mps_alloc=1.39GB mps_driver=3.57GB
+text google/embeddinggemma-2 mps torch.bfloat16 len=128 bs=1: 67ms/batch 14.9docs/s 1907tok/s maxrss=1.32GB mps_alloc=0.50GB mps_driver=1.10GB
+text google/embeddinggemma-2 mps torch.bfloat16 len=128 bs=16: 520ms/batch 30.8docs/s 3936tok/s maxrss=1.32GB mps_alloc=0.50GB mps_driver=1.10GB
+text google/embeddinggemma-2 mps torch.bfloat16 len=512 bs=1: 153ms/batch 6.5docs/s 3340tok/s maxrss=1.32GB mps_alloc=0.50GB mps_driver=1.11GB
+text google/embeddinggemma-2 mps torch.bfloat16 len=512 bs=16: 1985ms/batch 8.1docs/s 4127tok/s maxrss=1.39GB mps_alloc=0.50GB mps_driver=2.23GB
+text google/embeddinggemma-2 mps torch.bfloat16 len=2048 bs=1: 725ms/batch 1.4docs/s 2823tok/s maxrss=1.39GB mps_alloc=0.50GB mps_driver=2.23GB
+text google/embeddinggemma-2 mps torch.bfloat16 len=8192 bs=1: 6550ms/batch 0.2docs/s 1251tok/s maxrss=1.40GB mps_alloc=0.50GB mps_driver=5.11GB
+text google/embeddinggemma-2 mps torch.float32 len=128 bs=1: 53ms/batch 18.8docs/s 2406tok/s maxrss=2.33GB mps_alloc=1.01GB mps_driver=2.02GB
+text google/embeddinggemma-2 mps torch.float32 len=128 bs=16: 421ms/batch 38.0docs/s 4866tok/s maxrss=2.33GB mps_alloc=1.01GB mps_driver=2.08GB
+text google/embeddinggemma-2 mps torch.float32 len=512 bs=1: 128ms/batch 7.8docs/s 4001tok/s maxrss=2.33GB mps_alloc=1.01GB mps_driver=2.03GB
+text google/embeddinggemma-2 mps torch.float32 len=512 bs=16: 1686ms/batch 9.5docs/s 4858tok/s maxrss=2.33GB mps_alloc=1.01GB mps_driver=3.34GB
+text google/embeddinggemma-2 mps torch.float32 len=2048 bs=1: 725ms/batch 1.4docs/s 2823tok/s maxrss=2.33GB mps_alloc=1.01GB mps_driver=3.15GB
+text google/embeddinggemma-2 cpu torch.float32 len=128 bs=1: 138ms/batch 7.2docs/s 926tok/s maxrss=2.33GB 
+text google/embeddinggemma-2 cpu torch.float32 len=128 bs=16: 720ms/batch 22.2docs/s 2843tok/s maxrss=2.52GB 
+text google/embeddinggemma-2 cpu torch.float32 len=512 bs=1: 259ms/batch 3.9docs/s 1975tok/s maxrss=2.60GB 
+text google/embeddinggemma-2 cpu torch.float32 len=512 bs=16: 2669ms/batch 6.0docs/s 3069tok/s maxrss=3.87GB 
+text cl-nagoya/ruri-v3-310m mps torch.bfloat16 len=128 bs=1: 68ms/batch 14.7docs/s 1886tok/s maxrss=2.29GB mps_alloc=0.59GB mps_driver=1.01GB
+text cl-nagoya/ruri-v3-310m mps torch.bfloat16 len=128 bs=16: 563ms/batch 28.4docs/s 3640tok/s maxrss=2.29GB mps_alloc=0.59GB mps_driver=1.01GB
+text cl-nagoya/ruri-v3-310m mps torch.bfloat16 len=512 bs=1: 154ms/batch 6.5docs/s 3326tok/s maxrss=2.29GB mps_alloc=0.59GB mps_driver=1.02GB
+text cl-nagoya/ruri-v3-310m mps torch.bfloat16 len=512 bs=16: 1958ms/batch 8.2docs/s 4184tok/s maxrss=2.29GB mps_alloc=0.59GB mps_driver=2.02GB
+text cl-nagoya/ruri-v3-310m mps torch.bfloat16 len=2048 bs=1: 590ms/batch 1.7docs/s 3470tok/s maxrss=2.29GB mps_alloc=0.59GB mps_driver=2.02GB
+text cl-nagoya/ruri-v3-310m mps torch.bfloat16 len=8192 bs=1: 3841ms/batch 0.3docs/s 2133tok/s maxrss=2.29GB mps_alloc=0.59GB mps_driver=2.52GB
+text intfloat/multilingual-e5-large mps torch.bfloat16 len=128 bs=1: 74ms/batch 13.4docs/s 1718tok/s maxrss=3.68GB mps_alloc=1.05GB mps_driver=1.07GB
+text intfloat/multilingual-e5-large mps torch.bfloat16 len=128 bs=16: 588ms/batch 27.2docs/s 3484tok/s maxrss=3.68GB mps_alloc=1.05GB mps_driver=2.10GB
+text intfloat/multilingual-e5-large mps torch.bfloat16 len=512 bs=1: 167ms/batch 6.0docs/s 3063tok/s maxrss=3.68GB mps_alloc=1.05GB mps_driver=2.11GB
+text intfloat/multilingual-e5-large mps torch.bfloat16 len=512 bs=16: 2088ms/batch 7.7docs/s 3923tok/s maxrss=3.68GB mps_alloc=1.05GB mps_driver=2.11GB
+audio tower_only chunk=10s bs=1: 108ms/batch 92x realtime 1h_audio=39s maxrss=1.33GB mps_alloc=1.07GB mps_driver=1.15GB
+audio full_encode chunk=10s bs=1: 198ms/batch 50x realtime 1h_audio=71s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.15GB
+audio tower_only chunk=10s bs=8: 736ms/batch 109x realtime 1h_audio=33s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.13GB
+audio full_encode chunk=10s bs=8: 1206ms/batch 66x realtime 1h_audio=54s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.16GB
+audio tower_only chunk=30s bs=1: 274ms/batch 109x realtime 1h_audio=33s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.12GB
+audio full_encode chunk=30s bs=1: 498ms/batch 60x realtime 1h_audio=60s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.16GB
+audio tower_only chunk=30s bs=8: 2206ms/batch 109x realtime 1h_audio=33s maxrss=1.33GB mps_alloc=1.07GB mps_driver=3.18GB
+audio full_encode chunk=30s bs=8: 3800ms/batch 63x realtime 1h_audio=57s maxrss=1.33GB mps_alloc=1.07GB mps_driver=3.40GB
+image budget=70 bs=1: 160ms/batch 6.2img/s maxrss=1.32GB mps_alloc=0.82GB mps_driver=1.46GB
+image budget=70 bs=8: 1042ms/batch 7.7img/s maxrss=1.33GB mps_alloc=0.82GB mps_driver=1.45GB
+image budget=280 bs=1: 645ms/batch 1.5img/s maxrss=1.32GB mps_alloc=0.82GB mps_driver=1.45GB
+image budget=280 bs=8: 4894ms/batch 1.6img/s maxrss=1.32GB mps_alloc=0.82GB mps_driver=2.47GB
+audio tower_only chunk=30s bs=1: 274ms/batch 110x realtime 1h_audio=33s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.12GB
+audio full_encode chunk=30s bs=1: 497ms/batch 60x realtime 1h_audio=60s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.16GB
+audio tower_only chunk=60s bs=1: 547ms/batch 110x realtime 1h_audio=33s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.13GB
+audio full_encode chunk=60s bs=1: 1032ms/batch 58x realtime 1h_audio=62s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.20GB
+audio tower_only chunk=60s bs=4: 2206ms/batch 109x realtime 1h_audio=33s maxrss=1.33GB mps_alloc=1.07GB mps_driver=3.19GB
+audio full_encode chunk=60s bs=4: 4137ms/batch 58x realtime 1h_audio=62s maxrss=1.33GB mps_alloc=1.07GB mps_driver=3.47GB
+audio tower_only chunk=120s bs=1: 1076ms/batch 112x realtime 1h_audio=32s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.17GB
+audio full_encode chunk=120s bs=1: 2366ms/batch 51x realtime 1h_audio=71s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.57GB
+audio tower_only chunk=120s bs=4: 4519ms/batch 106x realtime 1h_audio=34s maxrss=1.33GB mps_alloc=1.07GB mps_driver=4.31GB
+audio full_encode chunk=120s bs=4: 9739ms/batch 49x realtime 1h_audio=73s maxrss=1.33GB mps_alloc=1.07GB mps_driver=6.85GB
+audio tower_only chunk=300s bs=1: 2799ms/batch 107x realtime 1h_audio=34s maxrss=1.47GB mps_alloc=1.07GB mps_driver=4.33GB
+audio full_encode chunk=300s bs=1: 8592ms/batch 35x realtime 1h_audio=103s maxrss=1.48GB mps_alloc=1.07GB mps_driver=7.66GB
+audio tower_only chunk=300s bs=4: 11332ms/batch 106x realtime 1h_audio=34s maxrss=1.72GB mps_alloc=1.07GB mps_driver=8.67GB
+audio full_encode chunk=300s bs=4: 34496ms/batch 35x realtime 1h_audio=103s maxrss=1.76GB mps_alloc=1.07GB mps_driver=13.00GB
