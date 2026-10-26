@@ -63,3 +63,19 @@ eval free reazon-test: CER 0.498 (training characters only; 1.6% of reference ch
   ref: あ
   hyp: の
 eval free: reader 6.7ms per 30s on mps
+whisper fleurs-test: CER 0.052, 464s for 2.36h (18x realtime, clip by clip)
+  ref: インターネットで敵対的環境コースについて検索するとおそらく現地企業の住所が出てくるでしょう
+  hyp: インターネットで敵対的環境コースについて検索するとおそらく現地企業の住所が出てくるでしょう
+  ref: また北側に行くなら世界的に有名なマリア像の聖地であるファティマの聖母の聖域神社を訪れましょう
+  hyp: また北側に行くなら世界的に有名なマリア像の聖地であるファティマの聖母の聖域神社を訪れましょう
+  ref: バルセロナの公用語はカタルーニャ語とスペイン語です約半数がカタルーニャ語を好み大多数がカタルーニャ語を理解しほぼ全員がスペイン語を知っています
+  hyp: バルセアナの公用語はカタルーネ語とスペイン語です約半数がカタルーネ語を好み大多数がカタルーネ語を理解しほぼ全員がスペイン語を知っています
+whisper: 1536ms per 30s (20x realtime)
+whisper reazon-test: CER 0.156, 3846s for 8.59h (8x realtime, clip by clip)
+  ref: ちょっと見ていきましょうか
+  hyp: ちょっと見ていきましょう
+  ref: 開運メイクでした
+  hyp: 逆転開運メイクでした
+  ref: 大橋さんはやっぱり大変でしたか
+  hyp: お噂はやっぱり大変でしたか
+whisper: 1458ms per 30s (21x realtime)

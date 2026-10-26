@@ -483,7 +483,27 @@ uv run --group coreml python p5_coreml.py bench ane        # 速さと一致を�
 - **速さ:** 読み取り部分は30秒あたり約7ミリ秒です。12章のNeural Engineの音声エンコーダ（98ミリ秒）と単純に足すと約105ミリ秒で、およそ285倍速に当たります。ただし、2つをつなげて実測した値ではありません。
 - 投稿の英語版の単語誤り率（約5%）とは、言語・指標・学習データの量（8×H100で2時間弱）が違うため、比べられません。
 
-### 13.4 再現手順
+### 13.4 既存のSTT（Whisper）との比較
+
+同じ評価データと同じCERの計算で、Whisper large-v3-turbo（MLX版、`mlx-community/whisper-large-v3-turbo`）と比べました。言語は日本語に固定し、temperatureは0、前の発話を文脈に使う設定は切りました。音声は1件ずつ処理しています。
+
+| | FLEURS 評価用のCER | ReazonSpeechのCER | 30秒の音声1件の時間 | 評価データ全体の速さ |
+|---|---|---|---|---|
+| Whisper large-v3-turbo（MLX、GPU） | **5.2%** | **15.6%** | 1,536ミリ秒（20倍速） | FLEURS 18倍速、ReazonSpeech 8倍速 |
+| EG2＋読み取り部分（13.3） | 22.8% | 49.4% | 約105ミリ秒（約285倍速、Neural Engine＋GPUの合計） | — |
+
+出力の例（Whisper）:
+
+| データ | 正解 | 出力 |
+|---|---|---|
+| FLEURS | バルセロナの公用語はカタルーニャ語とスペイン語です… | バルセアナの公用語はカタルーネ語とスペイン語です… |
+| ReazonSpeech | 大橋さんはやっぱり大変でしたか | お噂はやっぱり大変でしたか |
+
+- **精度はWhisperが大きく上です。** CERはFLEURSで約4分の1、ReazonSpeechで約3分の1です。EG2の読み取り部分は7.4時間の読み上げ音声で約30分学習しただけなので、大量のデータで学習したWhisperとの差は予想どおりです。なお、WhisperがFLEURSを学習に使ったかは公開されておらず、確認できません。
+- **速さはEG2の作りが10倍以上速いです。** Whisperは文字を1つずつ生成するため、デコーダの時間が大きくなります。ReazonSpeechで8倍速まで落ちるのは、短い発話が多く、1件ごとの固定の時間が効くためです。EG2の作りは音声エンコーダを1回通し、読み取り部分で全フレームを一度に読むだけです。
+- **使い分け:** 文字起こしの正確さが必要なら、今のところWhisperを使うべきです。EG2の作りが活きるのは、検索用の音声の埋め込みと、おおまかな文字起こしを同じエンコーダの1回の計算で両方得たい場合です。精度を上げるには、学習データの量と分野を増やす必要があります。
+
+### 13.5 再現手順
 
 ```bash
 hf download google/fleurs --repo-type dataset --include "data/ja_jp/*"
@@ -493,6 +513,7 @@ uv run python p6_stt.py features fleurs-train   # fleurs-dev / fleurs-test / rea
 uv run python p6_stt.py zeroshot fleurs-dev
 uv run python p6_stt.py train eg2               # free は通常のCTC
 uv run python p6_stt.py eval eg2 fleurs-test
+uv run --group whisper python p6_stt.py whisper fleurs-test   # reazon-test も同じ
 ```
 
 特徴量と学習したモデルは `build/stt/` に保存されます。ログは `logs/p6_stt.log` です。

@@ -4,6 +4,7 @@ uv run python p6_stt.py features {fleurs-train,fleurs-dev,fleurs-test,reazon-tes
 uv run python p6_stt.py zeroshot fleurs-dev
 uv run python p6_stt.py train {eg2,free}
 uv run python p6_stt.py eval {eg2,free} {fleurs-test,reazon-test}
+uv run --group whisper python p6_stt.py whisper {fleurs-test,reazon-test}
 """
 
 import csv
@@ -319,7 +320,39 @@ def zeroshot(split):
         print(f"  ref: {t}\n  hyp: {h[:120]}")
 
 
+WHISPER = "mlx-community/whisper-large-v3-turbo"
+
+
+def whisper(split):
+    """The same test sets and CER with Whisper large-v3-turbo (MLX), a ready-made STT to compare against."""
+    import mlx_whisper
+
+    items = list(SOURCES[split]())
+    opts = {"path_or_hf_repo": WHISPER, "language": "ja", "temperature": 0.0, "condition_on_previous_text": False,
+            "verbose": None}
+    mlx_whisper.transcribe(items[0][1], **opts)   # loads the model, so it isn't timed
+    hyps, start = [], time.perf_counter()
+    for _, audio, _ in items:
+        hyps.append(normalize(mlx_whisper.transcribe(audio, **opts)["text"]))
+    took = time.perf_counter() - start
+    texts = [normalize(t) for _, _, t in items]
+    seconds = sum(len(a) for _, a, _ in items) / 16000
+    errors = sum(edit_distance(h, t) for h, t in zip(hyps, texts))
+    print(f"whisper {split}: CER {errors / sum(len(t) for t in texts):.3f}, {took:.0f}s for {seconds / 3600:.2f}h "
+          f"({seconds / took:.0f}x realtime, clip by clip)")
+    for h, t in list(zip(hyps, texts))[:3]:
+        print(f"  ref: {t}\n  hyp: {h}")
+    # One 30 s clip, as the EG2 numbers are per 30 s (REPORT.md 12-13章).
+    audio = np.concatenate([a for _, a, _ in items])[: 16000 * 30]
+    n, t = 0, time.perf_counter()
+    while time.perf_counter() - t < 8 or n < 3:
+        mlx_whisper.transcribe(audio, **opts)
+        n += 1
+    sec = (time.perf_counter() - t) / n
+    print(f"whisper: {sec * 1000:.0f}ms per 30s ({30 / sec:.0f}x realtime)")
+
+
 if __name__ == "__main__":
     os.chdir(Path(__file__).parent)
     mode, *args = sys.argv[1:]
-    {"features": features, "zeroshot": zeroshot, "train": train, "eval": run_eval}[mode](*args)
+    {"features": features, "zeroshot": zeroshot, "train": train, "eval": run_eval, "whisper": whisper}[mode](*args)
