@@ -263,3 +263,67 @@ uv run python p3_bench.py image 70 8
 | `results/<パターン名>/` | Phase 1・2のmtebの結果（JSON） |
 | `logs/p3.log` / `logs/p3_m2pro.log` | Phase 3の計測ログ（M1 / M2 Pro） |
 | `data/say/` | macOSの `say` で生成したテスト用の音声 |
+
+## 10. 実行環境の比較（PyTorch・MLX・llama.cpp）
+
+ファイル検索に応用する前に、索引づくりに使う実行環境を決めるため、M2 Proで3つを比べました。きっかけは、EG2でファイル検索を実現している [DigUp](https://github.com/ARahim3/DigUp) がMacで速く動いていたことです。DigUpのソースを読むと、MLXではなく、llama.cpp（ggml-orgが公開している8bit量子化版のGGUF）をMetalで動かしていました。
+
+| 実行環境 | バージョン | 重み |
+|---|---|---|
+| PyTorch（sentence-transformers） | torch 2.14.1 | `google/embeddinggemma-2`（bf16またはfp32） |
+| MLX（mlx-vlm） | mlx 0.32.4 / mlx-vlm 0.7.10 | `google/embeddinggemma-2` をそのまま読み込み（bf16） |
+| llama.cpp（llama-server） | 0.7.0（build 11669） | `ggml-org/embeddinggemma-2-GGUF` の Q8_0（テキスト310MB＋画像・音声のエンコーダ555MB） |
+
+### 10.1 出力の一致
+
+PyTorch・fp32（CPU）の出力を基準にして、コサイン類似度を比べました。画像は、ノイズ画像と、日本語の文字を描いた文書画像です。
+
+| 実行環境 | テキスト | 画像（予算70） | 画像（予算280） |
+|---|---|---|---|
+| MLX（bf16） | 0.99997 | 0.99988〜0.99995 | 0.99992〜0.99999 |
+| llama.cpp（Q8_0） | 0.99997 | 0.99941〜0.99971 | 0.99971〜0.99986 |
+
+llama.cpp で画像を扱うには、次の2点が必要でした。どちらも、DigUpのコードにも同じ対処が書かれています。
+
+- **画像を、参照実装と同じ大きさに先に縮小する。** llama.cpp は画像を参照実装と違う方法で縮小するため、そのまま渡すと文書画像の一致が0.984まで下がりました。
+- **サーバーに渡す画像のトークン数の範囲を広げる（`--image-min-tokens 1 --image-max-tokens 1120`）。** 縮小後の画像のトークン数が最小値を下回ると、llama.cpp がもう一度拡大し直し、一致が0.969まで下がりました。
+
+また、画像の目印の文字列は、サーバーを起動するたびにランダムに決まります。`/props` の `media_marker` から取得する必要があります。
+
+### 10.2 速度とメモリ（1秒あたりの件数）
+
+| 条件 | PyTorch bf16 | PyTorch fp32 | MLX bf16 | llama.cpp Q8（同時処理1 / 4） |
+|---|---|---|---|---|
+| テキスト 128トークン・1件ずつ | 14.9 | **18.8** | 12.4 | 13.5 / - |
+| テキスト 128トークン・バッチ16 | 30.8 | 38.0 | **41.9** | 18.0 / 23.4 |
+| テキスト 512トークン・バッチ16 | 8.1 | 9.5 | **13.0** | 7.9 / 9.4 |
+| 写真（予算70）・1枚ずつ | **6.2** | - | 5.9 | 5.2 / - |
+| 写真（予算70）・バッチ8 | 7.7 | - | **9.3** | 6.5 / 7.5 |
+| 写真（予算140）・バッチ8 | 3.1 | - | **4.5** | 3.6 / 3.9 |
+| 文書画像（予算280）・バッチ8 | 1.6 | - | **2.0** | 1.7 / 1.7 |
+| メモリ | GPU 1.1〜2.5GB | GPU 2.0〜3.3GB | 最大 5.0GB | 1.0〜1.4GB（サーバーのプロセス全体） |
+
+PyTorchの画像はfp32では測っていません。PyTorchの数値は、6章のM2 Proの結果と、予算140を追加で測った結果です。
+
+- **極端に速い実行環境はありません。** いちばん速いのはMLXをバッチで使った場合で、PyTorchより約1.2〜1.6倍です。
+- **llama.cpp はメモリがいちばん少ないです。** ただし、画像は同時処理数を増やしても速くなりませんでした。画像のエンコーダは1枚ずつ処理しているようです。
+- DigUpが速く感じられるのは、計算そのものの速さよりも作りによるものと考えます。索引は一度作れば新しいファイルだけを追加し、検索のときはテキスト部分だけで検索文をベクトルにします（1文あたり約75ミリ秒）。
+
+### 10.3 結論
+
+ファイル検索の試作では、索引づくりにMLXを使います。3つの中でいちばん速く、出力も基準と一致し、PyTorchなしでPythonから使えるためです。
+
+### 10.4 再現手順
+
+```bash
+# llama.cpp のサーバー（GGUF は ggml-org/embeddinggemma-2-GGUF の Q8_0 の2ファイル）
+G=$(ls -d ~/.cache/huggingface/hub/models--ggml-org--embeddinggemma-2-GGUF/snapshots/*)
+llama-server -m $G/embeddinggemma-2-Q8_0.gguf --mmproj $G/mmproj-embeddinggemma-2-Q8_0.gguf \
+  --embeddings --pooling mean -ngl 999 -c 8192 -b 2048 -ub 2048 -np 1 \
+  --image-min-tokens 1 --image-max-tokens 1120 --host 127.0.0.1 --port 8089 --no-webui
+
+uv run python p4_runtime.py parity mlx     # 出力の一致（llama は llama-server の起動後に）
+uv run python p4_runtime.py bench mlx      # 速度とメモリ
+```
+
+計測ログは `logs/p4_runtime.log` です。

@@ -4,6 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "librosa>=1.0.0",
+    "mlx-vlm>=0.7.10",
     "mteb>=2.26.21",
     "pillow>=13.0.0",
     "sentence-transformers>=6.2.0",
