@@ -43,3 +43,17 @@ image budget=70 bs=1: 160ms/batch 6.2img/s maxrss=1.32GB mps_alloc=0.82GB mps_dr
 image budget=70 bs=8: 1042ms/batch 7.7img/s maxrss=1.33GB mps_alloc=0.82GB mps_driver=1.45GB
 image budget=280 bs=1: 645ms/batch 1.5img/s maxrss=1.32GB mps_alloc=0.82GB mps_driver=1.45GB
 image budget=280 bs=8: 4894ms/batch 1.6img/s maxrss=1.32GB mps_alloc=0.82GB mps_driver=2.47GB
+audio tower_only chunk=30s bs=1: 274ms/batch 110x realtime 1h_audio=33s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.12GB
+audio full_encode chunk=30s bs=1: 497ms/batch 60x realtime 1h_audio=60s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.16GB
+audio tower_only chunk=60s bs=1: 547ms/batch 110x realtime 1h_audio=33s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.13GB
+audio full_encode chunk=60s bs=1: 1032ms/batch 58x realtime 1h_audio=62s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.20GB
+audio tower_only chunk=60s bs=4: 2206ms/batch 109x realtime 1h_audio=33s maxrss=1.33GB mps_alloc=1.07GB mps_driver=3.19GB
+audio full_encode chunk=60s bs=4: 4137ms/batch 58x realtime 1h_audio=62s maxrss=1.33GB mps_alloc=1.07GB mps_driver=3.47GB
+audio tower_only chunk=120s bs=1: 1076ms/batch 112x realtime 1h_audio=32s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.17GB
+audio full_encode chunk=120s bs=1: 2366ms/batch 51x realtime 1h_audio=71s maxrss=1.33GB mps_alloc=1.07GB mps_driver=2.57GB
+audio tower_only chunk=120s bs=4: 4519ms/batch 106x realtime 1h_audio=34s maxrss=1.33GB mps_alloc=1.07GB mps_driver=4.31GB
+audio full_encode chunk=120s bs=4: 9739ms/batch 49x realtime 1h_audio=73s maxrss=1.33GB mps_alloc=1.07GB mps_driver=6.85GB
+audio tower_only chunk=300s bs=1: 2799ms/batch 107x realtime 1h_audio=34s maxrss=1.47GB mps_alloc=1.07GB mps_driver=4.33GB
+audio full_encode chunk=300s bs=1: 8592ms/batch 35x realtime 1h_audio=103s maxrss=1.48GB mps_alloc=1.07GB mps_driver=7.66GB
+audio tower_only chunk=300s bs=4: 11332ms/batch 106x realtime 1h_audio=34s maxrss=1.72GB mps_alloc=1.07GB mps_driver=8.67GB
+audio full_encode chunk=300s bs=4: 34496ms/batch 35x realtime 1h_audio=103s maxrss=1.76GB mps_alloc=1.07GB mps_driver=13.00GB

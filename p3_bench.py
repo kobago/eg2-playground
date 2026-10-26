@@ -71,11 +71,14 @@ def run_text(name, device, dtype, lengths):
 def run_audio(chunk_s, bs):
     m = load(EG2, "mps", torch.bfloat16, TOWERS["text+audio"])
     am, fe = m[0].auto_model, m[0].processor.feature_extractor
-    chunk = AUDIO[: 16000 * chunk_s]
+    # The feature extractor silently cuts input to 30s unless told otherwise.
+    m[0].processing_kwargs["audio"] = {"truncation": False}
+    # ja_long.wav is ~65s, so longer chunks repeat it; only the length matters for speed.
+    chunk = np.resize(AUDIO, 16000 * chunk_s)
     clips = [{"array": chunk, "sampling_rate": 16000}] * bs
 
     def tower_only():
-        f = fe([chunk] * bs, sampling_rate=16000, return_tensors="pt")
+        f = fe([chunk] * bs, sampling_rate=16000, return_tensors="pt", truncation=False)
         with torch.no_grad():
             am.get_audio_features(f["input_features"].to("mps", torch.bfloat16), f["input_features_mask"].to("mps"))
 
