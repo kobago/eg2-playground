@@ -21,3 +21,6 @@ dependencies = [
 coreml = [
     "coremltools==9.1.dev1",
 ]
+whisper = [
+    "mlx-whisper>=0.4.3",
+]
