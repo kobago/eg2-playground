@@ -1,0 +1,9 @@
+plain: torch wrapper vs original: max abs diff 0.00e+00, max |activation| 6.4
+coreml plain CPU_AND_NE: load=111.3s 873ms/30s 34x realtime 1h_audio=105s nan=False token_cos_mean=0.99999 token_cos_min=0.99894 pooled_cos=1.00000
+coreml plain CPU_AND_GPU: load=2.4s 144ms/30s 209x realtime 1h_audio=17s nan=False token_cos_mean=1.00000 token_cos_min=0.99953 pooled_cos=1.00000
+coreml plain CPU_ONLY: load=2.4s 219ms/30s 137x realtime 1h_audio=26s nan=False token_cos_mean=0.09548 token_cos_min=-0.19329 pooled_cos=0.36863
+E5RT encountered an STL exception. msg = MILCompilerForANE error: failed to compile ANE model using ANEF. Error=_ANECompiler : ANECCompile() FAILED.
+ane: torch wrapper vs original: max abs diff 1.88e-05, max |activation| 6.4
+coreml ane CPU_AND_NE: load=16.5s 98ms/30s 305x realtime 1h_audio=12s nan=False token_cos_mean=0.99999 token_cos_min=0.99970 pooled_cos=0.99999
+coreml ane CPU_AND_GPU: load=1.8s 120ms/30s 250x realtime 1h_audio=14s nan=False token_cos_mean=1.00000 token_cos_min=0.99976 pooled_cos=1.00000
+coreml ane CPU_ONLY: load=1.8s 228ms/30s 131x realtime 1h_audio=27s nan=False token_cos_mean=0.99996 token_cos_min=0.99902 pooled_cos=0.99999

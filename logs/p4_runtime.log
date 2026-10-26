@@ -1,0 +1,27 @@
+text mlx len=128 bs=1: 80ms/batch 12.4docs/s peak=1.47GB
+text mlx len=128 bs=16: 382ms/batch 41.9docs/s peak=2.02GB
+text mlx len=512 bs=1: 136ms/batch 7.4docs/s peak=2.02GB
+text mlx len=512 bs=16: 1230ms/batch 13.0docs/s peak=2.31GB
+image mlx budget=70 bs=1: 170ms/batch 5.9img/s peak=2.31GB
+image mlx budget=70 bs=8: 856ms/batch 9.3img/s peak=2.75GB
+image mlx budget=140 bs=1: 259ms/batch 3.9img/s peak=2.75GB
+image mlx budget=140 bs=8: 1792ms/batch 4.5img/s peak=3.42GB
+image mlx budget=280 bs=1: 581ms/batch 1.7img/s peak=3.42GB
+image mlx budget=280 bs=8: 4009ms/batch 2.0img/s peak=4.97GB
+text llama len=128 bs=1: 74ms/batch 13.5docs/s server_rss=1.02GB
+text llama len=128 bs=16: 888ms/batch 18.0docs/s server_rss=1.02GB
+text llama len=512 bs=1: 137ms/batch 7.3docs/s server_rss=1.01GB
+text llama len=512 bs=16: 2018ms/batch 7.9docs/s server_rss=1.01GB
+image llama budget=70 bs=1: 194ms/batch 5.2img/s server_rss=1.02GB
+image llama budget=70 bs=8: 1226ms/batch 6.5img/s server_rss=1.06GB
+image llama budget=140 bs=1: 284ms/batch 3.5img/s server_rss=1.07GB
+image llama budget=140 bs=8: 2250ms/batch 3.6img/s server_rss=1.12GB
+image llama budget=280 bs=1: 594ms/batch 1.7img/s server_rss=1.12GB
+image llama budget=280 bs=8: 4763ms/batch 1.7img/s server_rss=1.23GB
+image budget=140 bs=1: 427ms/batch 2.3img/s maxrss=1.33GB mps_alloc=0.82GB mps_driver=1.45GB
+image budget=140 bs=8: 2588ms/batch 3.1img/s maxrss=1.33GB mps_alloc=0.82GB mps_driver=1.45GB
+text llama-np4 len=128 bs=16: 683ms/batch 23.4docs/s server_rss=1.10GB
+text llama-np4 len=512 bs=16: 1706ms/batch 9.4docs/s server_rss=1.15GB
+image llama-np4 budget=70 bs=8: 1066ms/batch 7.5img/s server_rss=1.21GB
+image llama-np4 budget=140 bs=8: 2073ms/batch 3.9img/s server_rss=1.28GB
+image llama-np4 budget=280 bs=8: 4636ms/batch 1.7img/s server_rss=1.44GB
