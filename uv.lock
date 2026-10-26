@@ -215,6 +215,19 @@ wheels = [
 ]
 
 [[package]]
+name = "cattrs"
+version = "26.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/23/75/e72b839c3dc869c990b4842f3dba730bdcdf5215f68fc7955edf849a1792/cattrs-26.2.1.tar.gz", hash = "sha256:679132bfdc225c5ee40c024fc42519954767c387f950dc6751946c586bccdc6d", size = 525617, upload-time = "2026-09-26T20:53:21.114Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/cf/22794a399d99480486120e26e879ef008e21f5e85274c2ed591d568bb326/cattrs-26.2.1-py3-none-any.whl", hash = "sha256:a12aaa3453dc8f633a815293179f08b7421ed18d2575c459c3c736f840beac24", size = 74843, upload-time = "2026-09-26T20:53:19.767Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.10.23"
 source = { registry = "https://pypi.org/simple" }
@@ -467,6 +480,33 @@ wheels = [
 ]
 
 [[package]]
+name = "coremltools"
+version = "9.1.dev1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "cattrs" },
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "protobuf" },
+    { name = "pyaml" },
+    { name = "sympy" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b8/39/8ed1f8b59a21d5fe82aae7f7fbeee97e28a681951c19bd6a4f54c66bf854/coremltools-9.1.dev1.tar.gz", hash = "sha256:9fdd43cafada77a827b4abc8317affcef623c2031fe17ba28667895beccdba2b", size = 1693212, upload-time = "2026-08-03T18:24:24.926Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/11/ca/55377a8ba49eb984bc37ce85f95a751c2018bd47101e48031f248585e200/coremltools-9.1.dev1-cp312-none-macosx_10_15_x86_64.whl", hash = "sha256:3fb5c0bbc715447bcacfe01116791b66510a0af3cbccc0600716a9dea40dbc73", size = 2833343, upload-time = "2026-08-03T18:19:27.564Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/95/c72025c80a347cbeeaf7a099f25f5e6ff0bc27f22cc0f9ca0a9dbd4a5b19/coremltools-9.1.dev1-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:80104e16f19aba7a88bf224d33065d82df53f2f6be97d0422f31d8f5c9c49036", size = 2805251, upload-time = "2026-08-03T18:19:48.108Z" },
+    { url = "https://files.pythonhosted.org/packages/75/43/2c444f1175bc63a01b5083003d0fc03f0f9897aad1a1d4bf043f2122903e/coremltools-9.1.dev1-cp312-none-manylinux1_x86_64.whl", hash = "sha256:ed097e556a0df05b512e8531f2a077a809ee7470c3ac3f1383c49d3157799f23", size = 2356851, upload-time = "2026-08-03T18:20:01.398Z" },
+    { url = "https://files.pythonhosted.org/packages/16/fb/d8ad231221b4eb7652625f12152e2a4b504a212fe92ef20d36012cfc8b68/coremltools-9.1.dev1-cp313-none-macosx_10_15_x86_64.whl", hash = "sha256:dd372ae2beaff75dbe1903a79a8414fa517724ff8dcf0421a5a70ce38905ed48", size = 2833671, upload-time = "2026-08-03T18:20:20.107Z" },
+    { url = "https://files.pythonhosted.org/packages/99/95/9302b9df3829bd0126b97d9e832aeaaff45cfc5494a0fa974b9b3b381f25/coremltools-9.1.dev1-cp313-none-macosx_11_0_arm64.whl", hash = "sha256:13c42968f6b43375ef432b0ebd795b6117b02aa7a299c0ae9c3b0ef8f8c8ef72", size = 2805441, upload-time = "2026-08-03T18:20:38.687Z" },
+    { url = "https://files.pythonhosted.org/packages/66/fc/d78d8c95af710b1150a5c36d11c49d07eea61612d905fae7d5a96e0706c5/coremltools-9.1.dev1-cp313-none-manylinux1_x86_64.whl", hash = "sha256:fe1c825387e37f165ce32782d171eb0980f1f55361e32d608b7cc63b7954ee1d", size = 2356947, upload-time = "2026-08-03T18:20:54.124Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/14/5822682fe1fbf4d24db31644cc2d9ada97fbc6afc6409d2cb7cf02a86dc8/coremltools-9.1.dev1-cp314-none-macosx_10_15_x86_64.whl", hash = "sha256:717589313f327adc4bef85455b09b7823c23d36d9670cb215b5df21e3f1a4cb9", size = 2834343, upload-time = "2026-08-03T18:21:10.521Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/51/1329da034bf9507e25ff293759950048ade35bb1a48b1a1a59db57506d8d/coremltools-9.1.dev1-cp314-none-macosx_11_0_arm64.whl", hash = "sha256:a40c58488e1388ecad9aa1c868a97cf6d9bc4a57af32b4a808aa9067ae9abb0d", size = 2806587, upload-time = "2026-08-03T18:21:28.155Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/0f/2f04259d047dff29edbaee9c324e63cea0746402b3c06fd2b52ea92e4cbd/coremltools-9.1.dev1-cp314-none-manylinux1_x86_64.whl", hash = "sha256:3b06fcabe748089d92a367822cb25b16ce180e88e295be5c452be84ef59f0abf", size = 2357038, upload-time = "2026-08-03T18:21:45.351Z" },
+]
+
+[[package]]
 name = "cryptography"
 version = "50.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -668,6 +708,11 @@ dependencies = [
     { name = "transformers" },
 ]
 
+[package.dev-dependencies]
+coreml = [
+    { name = "coremltools" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "librosa", specifier = ">=1.0.0" },
@@ -683,6 +728,9 @@ requires-dist = [
     { name = "torchvision", specifier = ">=0.29.1" },
     { name = "transformers", specifier = ">=5.20.2" },
 ]
+
+[package.metadata.requires-dev]
+coreml = [{ name = "coremltools", specifier = "==9.1.dev1" }]
 
 [[package]]
 name = "fastapi"
@@ -2196,6 +2244,33 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d4/ef/8bae0a316d406644450522f2f3d44a4e19632f5f3bb60d1d0e6c53842616/propcache-0.5.4-cp315-cp315t-win_amd64.whl", hash = "sha256:02c0a34f16889cf800f10f0247a564d8ce6eeab6ffcd7c87198f769067eb8432", size = 48574, upload-time = "2026-09-16T00:17:10.077Z" },
     { url = "https://files.pythonhosted.org/packages/57/be/bcc053f66a97355683884b448198e79580fae8e8fa4d96b9bb01614e9913/propcache-0.5.4-cp315-cp315t-win_arm64.whl", hash = "sha256:dc4242ca653c9b30ab51c5f8193323e7bc0928f897ee9103201e59a43abcb72e", size = 45625, upload-time = "2026-09-16T00:17:11.377Z" },
     { url = "https://files.pythonhosted.org/packages/f5/cd/785c64ed382f3f04201870267b02783f63b4678c2acfddc177a3ebcc2727/propcache-0.5.4-py3-none-any.whl", hash = "sha256:62c60aec739ed00124573cce1178138fd690c7676352d67a37328c1cf51d7468", size = 16338, upload-time = "2026-09-16T00:17:13.106Z" },
+]
+
+[[package]]
+name = "protobuf"
+version = "7.36.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d9/89/5b8517baa72f84a67b8a307ba953c91057af618bf40bf676f3c03551f8f0/protobuf-7.36.2.tar.gz", hash = "sha256:497d0463ff3316681da6c0b9e8d06cb465d61abce00b613ab42226175644d1bb", size = 512737, upload-time = "2026-09-17T20:07:59.326Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/72/98342feb672507c8f3a69e34b4fa8961f608edba5c1a48a6f47156d92cb5/protobuf-7.36.2-cp310-abi3-macosx_10_9_universal2.whl", hash = "sha256:cbc70b17ee27e28894c7fee8bb04be1abead49e936bc70eb60052531eee2079e", size = 456039, upload-time = "2026-09-17T20:07:51.542Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/ea/91fdf7c2b8bbd49cde056f00a9df6773532987e1c00fe2830b895af95c7e/protobuf-7.36.2-cp310-abi3-manylinux2014_aarch64.whl", hash = "sha256:e11e1f0180583a2af89db6a2ecd9e8dc40aa6d2988ca175bfd0e6d12ea72d74e", size = 344219, upload-time = "2026-09-17T20:07:52.914Z" },
+    { url = "https://files.pythonhosted.org/packages/17/ab/5fd5f8ece73fad885c5a09aa849b32d70472f954ba3a92d3bb5974ea953b/protobuf-7.36.2-cp310-abi3-manylinux2014_s390x.whl", hash = "sha256:f4fee11ec330d238b34a05c9b675f693c20415d1c5bd7d5320cc2f8a798eb9cf", size = 357223, upload-time = "2026-09-17T20:07:53.985Z" },
+    { url = "https://files.pythonhosted.org/packages/db/f3/3996583dd2906297a637af12114deddf7658af6e683fedb83be061983fb5/protobuf-7.36.2-cp310-abi3-manylinux2014_x86_64.whl", hash = "sha256:89f23aa53c24553a2416fd4fd1ec06f74fa42b14b546d8883128813f775bbfd2", size = 343223, upload-time = "2026-09-17T20:07:54.931Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/1b/dcc64f358fcb51811b58ae40b3d28f820725f116d86487cc20bd4b130701/protobuf-7.36.2-cp310-abi3-win32.whl", hash = "sha256:912c1221170e16c08d1f086762f563dd61ff83c18b5fa6652952dfaded66f728", size = 442998, upload-time = "2026-09-17T20:07:55.826Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/55/b77bda4e5e5f5971fb51b07663694690e9afdb9402136c16a522bd621cad/protobuf-7.36.2-cp310-abi3-win_amd64.whl", hash = "sha256:a300819d441e078a5608c0d3c709796bb548136058fda017ae51d425b44fd353", size = 456514, upload-time = "2026-09-17T20:07:57.188Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/04/d52c7016b04b6c5108f26691f9d33ec82a9b65d041f1a9c771137693d618/protobuf-7.36.2-py3-none-any.whl", hash = "sha256:bdb3a345d48db958e6ce1f18e508beb0cc981d64f24088427549c866cd039f1e", size = 179806, upload-time = "2026-09-17T20:07:58.211Z" },
+]
+
+[[package]]
+name = "pyaml"
+version = "26.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/15/6a/acfdf17de0d6947b419da8696e02b781b18de2cf49e0472298b50e1f0711/pyaml-26.7.0.tar.gz", hash = "sha256:11cda3a796efc6dbce0d56836be56cfd26289dad07bcd78e9904086729929c93", size = 30669, upload-time = "2026-07-04T00:34:38.532Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/26/3f05f9e3692853dff663913d5d62fb8df3f5640c8d70b06588c0b51ed953/pyaml-26.7.0-py3-none-any.whl", hash = "sha256:cfa382780c43ae660669b87d394d550a41856ef175f5749f51f753e12d7077ac", size = 27226, upload-time = "2026-07-04T00:34:37.198Z" },
 ]
 
 [[package]]

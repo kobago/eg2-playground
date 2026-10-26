@@ -16,3 +16,8 @@ dependencies = [
     "torchvision>=0.29.1",
     "transformers>=5.20.2",
 ]
+
+[dependency-groups]
+coreml = [
+    "coremltools==9.1.dev1",
+]

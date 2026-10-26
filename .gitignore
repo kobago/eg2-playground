@@ -5,3 +5,5 @@ logs/*
 !logs/p3_m2pro.log
 !logs/p4_runtime.log
 *.sqlite
+build/
+!logs/p5_coreml.log
