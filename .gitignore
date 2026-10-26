@@ -2,3 +2,4 @@
 __pycache__/
 logs/*
 !logs/p3.log
+!logs/p3_m2pro.log
