@@ -1,0 +1,65 @@
+features fleurs-train: 2292 clips, 7.42h audio, 191s
+features fleurs-dev: 266 clips, 0.94h audio, 25s
+features fleurs-test: 650 clips, 2.36h audio, 61s
+features reazon-test: 5263 clips, 8.59h audio, 232s
+zeroshot fleurs-dev: CER 4.925
+  ref: 彼はwifiで鳴るドアベルを作ったそうです
+  hyp: 赣喫る郵於郵後昧後瑪唤瑪唤昧後飢後飢後基昧後昧各摩後基摩瑪基宥飢宥後各昧宥摩後宥藓书茗的クKh犍谒ヤa为ワWワ孀ワfYj的デナnNるrドダドダワアb尔るルオト采くタっ萨ソS暠寔纫嫄迳ス斯ス後巳嚕多裴亡摩多亡嚕裴嚕ガM多泡ガ呢嚕多喰各喰摩多嫉
+  ref: モルドバの主な宗教は正統派キリスト教です
+  hyp: 赣郵る瑪後於瑪蒸後瑪後瑪後昧瑪昧後昧蒸昧後昧吴跋螞錫後螞肛淆後は烃後烃嚼墨咻的もMm妪ルラドザバノオモマ瑪因ナラシ投筑终锜鍒雞伷はwイ被セ正政斷T谀ハHハケキ堀リしさタ先榎K交O诰裘dレぜ宗斯ス斯ス稣杯巳姊多巳姊裴嫉裴巳ミ液的ミ後ミ後ミ呢輝
+  ref: ヘブライ人家族はほとんど戸外で暮らしていました
+  hyp: 赣喫溪郵咻後はむ嚎後む嚎r後r喝後啊仟睹喝後珍後蔑喫脅後蔑nっ後磋N後脅nN後嚕後逝诙墨忱ヘHベブライジJ人民カk助ズZクかカぁはH健湎0燙崭ドトタガゲカ碼デくクラスし著てい亻泡マま什忝たタぉ讳ぉ後巳礡嚕地裴嚕裴泡嚕摩逝呢摩多呢嚕多ガ靂多摩
+train eg2: 7.9M params, 1747 characters seen in training, 9679 in EG2's vocabulary
+  epoch 10: loss 179.4, dev CER 0.296, 212s
+  epoch 20: loss 93.1, dev CER 0.249, 416s
+  epoch 30: loss 68.0, dev CER 0.247, 618s
+  epoch 40: loss 56.8, dev CER 0.239, 821s
+  epoch 50: loss 50.2, dev CER 0.243, 1112s
+  epoch 60: loss 46.6, dev CER 0.238, 1501s
+  epoch 70: loss 44.2, dev CER 0.236, 1745s
+  epoch 80: loss 43.4, dev CER 0.237, 1989s
+exit eg2=0
+train free: 8.5M params, 1747 characters seen in training, 9679 in EG2's vocabulary
+  epoch 10: loss 72.4, dev CER 0.269, 239s
+  epoch 20: loss 45.7, dev CER 0.256, 448s
+  epoch 30: loss 39.1, dev CER 0.254, 654s
+  epoch 40: loss 35.2, dev CER 0.251, 870s
+  epoch 50: loss 30.4, dev CER 0.247, 1079s
+  epoch 60: loss 28.0, dev CER 0.244, 1288s
+  epoch 70: loss 25.5, dev CER 0.243, 1518s
+  epoch 80: loss 24.9, dev CER 0.241, 1747s
+exit free=0
+eval eg2 fleurs-test: CER 0.228 (training characters only; 0.7% of reference characters unseen)
+eval eg2 fleurs-test: CER 0.228 (all 9679 characters of EG2's vocabulary)
+  ref: 群島や湖では必ずしもヨットは必要ありません
+  hyp: 軍島や水ではカナもヨットは必要ありません
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: セブリングボックにとってはご連配が止まりました
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: スブリンボックにとってはゴ連配が止まりました
+eval eg2: reader 7.6ms per 30s on mps
+eval eg2 reazon-test: CER 0.494 (training characters only; 1.6% of reference characters unseen)
+eval eg2 reazon-test: CER 0.494 (all 9679 characters of EG2's vocabulary)
+  ref: 全く
+  hyp: まった
+  ref: 僕
+  hyp: まかな
+  ref: あ
+  hyp: 
+eval eg2: reader 7.2ms per 30s on mps
+eval free fleurs-test: CER 0.232 (training characters only; 0.7% of reference characters unseen)
+  ref: 群島や湖では必ずしもヨットは必要ありません
+  hyp: 軍島や湖ではカナしもよッとは必要ありません
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: セブリングボックにとってはこコ連配がとまりました
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: 水ブリンボッックにとっては5連配が飛まりました
+eval free: reader 6.7ms per 30s on mps
+eval free reazon-test: CER 0.498 (training characters only; 1.6% of reference characters unseen)
+  ref: 全く
+  hyp: った
+  ref: 僕
+  hyp: まかな
+  ref: あ
+  hyp: の
+eval free: reader 6.7ms per 30s on mps

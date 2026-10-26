@@ -7,3 +7,4 @@ logs/*
 *.sqlite
 build/
 !logs/p5_coreml.log
+!logs/p6_stt.log
