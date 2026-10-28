@@ -568,12 +568,12 @@ uv run --group whisper python p7_tts.py listen tts fleurs-test   # copy / decode
 
 ログは `logs/p7_tts.log` です。
 
-## 15. Neural Engine のSTTをブラウザで試す
+## 15. STTとTTSをブラウザで試す
 
-12・13章のSTTを、マイクの音声でリアルタイムに試せる Web アプリにしました（`stt_app/`）。
+12・13章のSTTをマイクの音声でリアルタイムに試し、14章のTTSで入力した文を読み上げられる Web アプリにしました（`stt_app/`）。
 
 ```bash
-uv run --group coreml --group app python -m stt_app.server   # https://<このMacのアドレス>:8443/
+uv run --group coreml --group app python -m stt_app.server   # https://<このMacのアドレス>:8443/ （--no-tts でSTTだけ）
 ```
 
 - ブラウザがマイクを使えるのは https のページだけなので、初回に自己署名の証明書を `build/stt_app/` に作ります（localhost と Tailscale のアドレス入り）。開くときに一度だけ警告を許可します。0.0.0.0 で待ち受けます。
@@ -589,3 +589,12 @@ FLEURS の音声を0.25秒ずつ送った場合（M2 Pro、裏でTTSの学習が
 | メモリ | 約1.0GB（ピーク1.1GB）。Neural Engine のドライバが別プロセスで持つ分は含まない |
 | 起動 | 約21秒（Core ML のモデルの読み込みが17秒） |
 | 精度 | FLEURS 検証用40件で CER 23.2%（13章と同じ。30秒に満たない音声を無音で埋めても落ちない） |
+
+TTS のタブでは、入力した文を。！？と改行（長い文は、も）で区切って1文ずつ作り、0.25秒の無音でつなぎます。FLEURS の評価用3文について、元の音声・Vocos だけ・EG2の音声トークンから・TTS を聞き比べられます。STT のタブの「この音声を保存」で、サーバーが受け取った音声を `build/stt_app/recordings/` に保存できます（押したときだけ）。
+
+| TTS（GPU） | 値 |
+|---|---|
+| 10秒の音声（2文、33文字）を作る時間 | 約55ミリ秒（約190倍速）。テキスト→音声トークン 16、→メル 16、Vocos 23ミリ秒 |
+| メモリ（STTとTTSを両方読み込んだプロセス） | 約2.5GB（うち Metal 約1.1GB） |
+
+使ってみた感想（ユーザー）: STT は話し言葉で「オフ会→オ不い」「当日→当実」のような誤りが出る。TTS はノイズが強く、聞き取りはかろうじてできる程度で、拡散モデルで生成した音声のような質感。

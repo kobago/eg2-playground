@@ -427,6 +427,7 @@ def listen(kind, split):
         ids, texts, tokens, mel = ([v[i] for i in keep] for v in (ids, texts, tokens, mel))
     samples = OUT / "samples"
     samples.mkdir(parents=True, exist_ok=True)
+    original = {k: a for k, a, _ in SOURCES[split]() if k in ids[:3]} if kind == "copy" else {}
     opts = {"path_or_hf_repo": WHISPER, "language": "ja", "temperature": 0.0, "condition_on_previous_text": False,
             "verbose": None}
     errors, seconds, compute = 0, 0.0, 0.0
@@ -451,6 +452,8 @@ def listen(kind, split):
         seconds += len(wave) / SR
         if i < 3:
             sf.write(samples / f"{kind}-{Path(key).stem}.wav", wave.numpy(), SR)
+            if kind == "copy":   # and the clip itself, to compare with (stt_app plays them side by side)
+                sf.write(samples / f"orig-{Path(key).stem}.wav", to_24k(original[key], len(tok)).numpy(), SR)
         hyp = normalize(mlx_whisper.transcribe(to_16k(wave), **opts)["text"])
         errors += edit_distance(hyp, text)
         if i < 3:

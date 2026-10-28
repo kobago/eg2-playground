@@ -1,6 +1,7 @@
-"""Live Japanese STT in the browser: EG2's audio encoder on the Neural Engine (REPORT.md 12章) + the reader (13章).
+"""EG2 speech in the browser: live Japanese STT with the audio encoder on the Neural Engine (REPORT.md 12・13章), and
+TTS through EG2's audio tokens (14章).
 
-uv run --group coreml --group app python -m stt_app.server [--port 8443] [--reader-device cpu]
+uv run --group coreml --group app python -m stt_app.server [--port 8443] [--reader-device cpu] [--no-tts]
 
 Serves https on 0.0.0.0, with a self-signed certificate made on first start: browsers only give the microphone to
 https pages (or localhost), and this is meant to be opened from another Mac over Tailscale.
@@ -8,9 +9,12 @@ https pages (or localhost), and this is meant to be opened from another Mac over
 
 import argparse
 import asyncio
+import base64
 import ctypes
+import io
 import json
 import os
+import re
 import subprocess
 import threading
 import time
@@ -21,10 +25,11 @@ os.environ.setdefault("PYTORCH_MPS_HIGH_WATERMARK_RATIO", "0.7")
 os.environ.setdefault("PYTORCH_MPS_LOW_WATERMARK_RATIO", "0.5")
 
 import numpy as np
+import soundfile as sf
 import torch
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi import Body, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, HTMLResponse
 
 ROOT = Path(__file__).resolve().parent.parent
 RATE = 16000
@@ -79,6 +84,61 @@ class Transcriber:
         return text, {"features": t1 - t0, "encoder": t2 - t1, "reader": t3 - t2, "total": t3 - t0}
 
 
+class Speaker:
+    """Text -> waveform (24 kHz): characters' EG2 text embeddings -> audio tokens -> mel -> Vocos (p7_tts.py)."""
+
+    MAX_CHARS = 400
+
+    def __init__(self, device):
+        import p7_tts as t
+
+        self.t, self.device = t, device
+        self.index, emb = t.text_table()
+        self.tts = t.TextToTokens(emb.float()).to(device).eval()
+        self.tts.load_state_dict(torch.load(ROOT / t.OUT / "tts.pt", map_location=device))
+        self.decoder = t.Decoder().to(device).eval()
+        self.decoder.load_state_dict(torch.load(ROOT / t.OUT / "decoder.pt", map_location=device))
+        self.vocos = t.Vocos.pretrained().to(device)
+        self.lock = threading.Lock()
+        self("テスト")
+
+    def sentences(self, text):
+        """Trained on single sentences without punctuation: split at 。！？ and line breaks, long ones at 、 too."""
+        from p6_stt import normalize
+
+        out = []
+        for part in re.split(r"[。．！？!?\n]+", text):
+            pieces = re.split(r"[、，,]", part) if len(normalize(part)) > 60 else [part]
+            out += [normalize(p) for p in pieces if normalize(p)]
+        return out
+
+    def __call__(self, text):
+        t = self.t
+        gap = np.zeros(int(0.25 * t.SR), np.float32)
+        parts = self.sentences(text)
+        if not parts or sum(map(len, parts)) > self.MAX_CHARS:
+            raise ValueError(f"1〜{self.MAX_CHARS}文字で入力してください")
+        timing = {"tokens": 0.0, "mel": 0.0, "vocos": 0.0}
+        waves, unknown = [], sorted({c for p in parts for c in p if c not in self.index})
+        sync = torch.mps.synchronize if self.device == "mps" else (lambda: None)
+        with self.lock, torch.no_grad():
+            for part in parts:
+                t0 = time.perf_counter()
+                tok = self.tts.generate(torch.tensor([t.encode_text(part, self.index)], device=self.device))[0]
+                sync()
+                t1 = time.perf_counter()
+                mel = self.decoder(tok[None], t.mel_frames(len(tok))).transpose(1, 2)
+                sync()
+                t2 = time.perf_counter()
+                waves += [self.vocos(mel)[0].numpy(), gap]
+                t3 = time.perf_counter()
+                timing["tokens"] += t1 - t0
+                timing["mel"] += t2 - t1
+                timing["vocos"] += t3 - t2
+        timing["total"] = sum(timing.values())
+        return np.concatenate(waves[:-1]), parts, unknown, timing
+
+
 # ---- memory, as Activity Monitor counts it ---------------------------------------------------------------------
 
 class RusageInfoV2(ctypes.Structure):
@@ -119,6 +179,9 @@ def memory():
 
 app = FastAPI()
 model: Transcriber
+speaker: Speaker | None = None
+SAMPLES = ROOT / "build/tts/samples"
+RECORDINGS = ROOT / "build/stt_app/recordings"
 
 
 @app.get("/")
@@ -128,7 +191,46 @@ def index():
 
 @app.get("/info")
 def info():
-    return {"reader_device": model.device, "encoder_load": model.encoder_load, "memory": memory()}
+    return {"reader_device": model.device, "encoder_load": model.encoder_load, "tts": speaker is not None,
+            "tts_device": speaker.device if speaker else None, "memory": memory()}
+
+
+@app.post("/tts")
+async def speak(text: str = Body(..., embed=True)):
+    if speaker is None:
+        raise HTTPException(404, "TTS is off (--no-tts)")
+    try:
+        wave, parts, unknown, timing = await asyncio.to_thread(speaker, text)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    buf = io.BytesIO()
+    sf.write(buf, wave, speaker.t.SR, format="WAV", subtype="PCM_16")
+    return {"audio": base64.b64encode(buf.getvalue()).decode(), "seconds": len(wave) / speaker.t.SR,
+            "sentences": parts, "unknown": unknown, "timing": timing, "memory": memory()}
+
+
+@app.get("/samples")
+def samples():
+    """The FLEURS test clips p7_tts.py listen saved, each as the original and the speech made at every step."""
+    import zipfile
+
+    from p6_stt import OUT as STT
+    from p6_stt import normalize
+
+    keys = sorted({p.stem.removeprefix("orig-") for p in SAMPLES.glob("orig-*.wav")})
+    with zipfile.ZipFile(ROOT / STT / "fleurs-test.npz") as z:   # just the ids and texts, not the tokens
+        d = np.load(z.open("ids.npy")), np.load(z.open("texts.npy"))
+    text = {Path(k).stem: normalize(t) for k, t in zip(*d)}
+    kinds = ["orig", "copy", "decoder", "tts-oracle", "tts"]
+    return [{"key": k, "text": text.get(k, ""), "files": {kind: f"{kind}-{k}.wav" for kind in kinds
+                                                          if (SAMPLES / f"{kind}-{k}.wav").exists()}} for k in keys]
+
+
+@app.get("/samples/{name}")
+def sample(name: str):
+    if not re.fullmatch(r"[a-z-]+-\d+\.wav", name) or not (SAMPLES / name).exists():
+        raise HTTPException(404)
+    return FileResponse(SAMPLES / name, media_type="audio/wav")
 
 
 def quietest(audio):
@@ -142,11 +244,11 @@ async def transcribe(ws: WebSocket):
     """Takes 16 kHz mono int16 PCM as binary messages ("reset" as text). After new audio arrives, re-reads the open
     segment (up to 30 s) and sends back the closed text, the open segment's text, timings and memory."""
     await ws.accept()
-    closed, segment, received = [], np.zeros(0, np.float32), 0
+    closed, segment, received, recorded = [], np.zeros(0, np.float32), 0, []
     fresh = asyncio.Event()
 
     async def receive():
-        nonlocal closed, segment, received
+        nonlocal closed, segment, received, recorded
         while True:
             msg = await ws.receive()
             if msg["type"] == "websocket.disconnect":
@@ -154,10 +256,17 @@ async def transcribe(ws: WebSocket):
             if msg.get("bytes"):
                 pcm = np.frombuffer(msg["bytes"], np.int16).astype(np.float32) / 32768
                 segment = np.concatenate([segment, pcm])
+                recorded.append(pcm)
                 received += len(pcm)
                 fresh.set()
             elif msg.get("text") == "reset":
-                closed, segment, received = [], np.zeros(0, np.float32), 0
+                closed, segment, received, recorded = [], np.zeros(0, np.float32), 0, []
+            elif msg.get("text") == "save" and recorded:
+                # Only when asked (the page's button): what the server heard, to look into a transcript offline.
+                RECORDINGS.mkdir(parents=True, exist_ok=True)
+                path = RECORDINGS / time.strftime("%Y%m%d-%H%M%S.wav")
+                sf.write(path, np.concatenate(recorded), RATE)
+                await ws.send_text(json.dumps({"saved": str(path.relative_to(ROOT))}))
 
     async def work():
         nonlocal segment
@@ -207,14 +316,18 @@ def certificate():
 
 
 def main():
-    global model
+    global model, speaker
     p = argparse.ArgumentParser()
     p.add_argument("--host", default="0.0.0.0")
     p.add_argument("--port", type=int, default=8443)
     p.add_argument("--reader-device", default="cpu", choices=["cpu", "mps"])
+    p.add_argument("--tts-device", default="mps", choices=["cpu", "mps"])
+    p.add_argument("--no-tts", action="store_true")
     args = p.parse_args()
     t = time.perf_counter()
     model = Transcriber(args.reader_device)
+    if not args.no_tts:
+        speaker = Speaker(args.tts_device)
     print(f"ready in {time.perf_counter() - t:.1f}s (encoder load {model.encoder_load:.1f}s); "
           f"memory {memory()['footprint'] / 2**20:.0f} MiB")
     cert, key = certificate()
