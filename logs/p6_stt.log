@@ -137,3 +137,76 @@ eval free@0.125 fleurs-test: CER 0.364 (training characters only; 3.4% of refere
 eval free@0.125: reader 6.8ms per 30s on mps
 eval free@0.125 reazon-test: CER 0.577 (training characters only; 4.4% of reference characters unseen)
 eval free@0.125: reader 6.8ms per 30s on mps
+features reazon-train-01: 4137 clips, 6.82h audio, 183s
+features reazon-train-02: 4137 clips, 6.79h audio, 180s
+features reazon-train-03: 4137 clips, 6.65h audio, 177s
+features reazon-train-04: 4137 clips, 6.59h audio, 174s
+features reazon-train-05: 4137 clips, 6.67h audio, 177s
+features reazon-train-06: 4137 clips, 6.50h audio, 173s
+features reazon-train-07: 4136 clips, 6.66h audio, 176s
+features reazon-train-08: 4136 clips, 6.73h audio, 177s
+features reazon-train-09: 4136 clips, 6.69h audio, 177s
+features reazon-train-10: 4136 clips, 6.55h audio, 173s
+features reazon-train-11: 4136 clips, 6.60h audio, 173s
+features reazon-train-12: 4136 clips, 6.76h audio, 178s
+features reazon-train-13: 4136 clips, 6.68h audio, 175s
+skipped 00a/cd6fd726264c3.flac: not readable
+features reazon-train-14: 4135 clips, 6.63h audio, 178s
+eval eg2 reazon-test: CER 0.494 (training characters only; 1.6% of reference characters unseen)
+eval eg2 reazon-test: CER 0.480 on the 4677 clips whose sentence is not in ReazonSpeech train
+eval eg2 reazon-test: CER 0.494 (all 9679 characters of EG2's vocabulary)
+eval eg2: reader 7.2ms per 30s on mps
+train eg2+reazon: 7.9M params, 64012 clips (107.02h; 26 left out), 12 epochs, 2978 characters seen in training, 9679 in EG2's vocabulary
+  epoch 1: loss 8517.3, dev CER 0.383, fleurs 0.366, reazon 0.413, 308s
+  epoch 2: loss 4242.2, dev CER 0.335, fleurs 0.319, reazon 0.363, 595s
+  epoch 3: loss 3497.5, dev CER 0.283, fleurs 0.269, reazon 0.307, 883s
+  epoch 4: loss 3078.3, dev CER 0.277, fleurs 0.256, reazon 0.314, 1172s
+  epoch 5: loss 2760.4, dev CER 0.261, fleurs 0.241, reazon 0.296, 1461s
+  epoch 6: loss 2500.6, dev CER 0.241, fleurs 0.230, reazon 0.261, 1748s
+  epoch 7: loss 2285.2, dev CER 0.235, fleurs 0.217, reazon 0.267, 2035s
+  epoch 8: loss 2079.3, dev CER 0.226, fleurs 0.209, reazon 0.257, 2321s
+  epoch 9: loss 1926.7, dev CER 0.221, fleurs 0.205, reazon 0.249, 2607s
+  epoch 10: loss 1798.9, dev CER 0.218, fleurs 0.202, reazon 0.246, 2893s
+  epoch 11: loss 1716.9, dev CER 0.218, fleurs 0.201, reazon 0.247, 3179s
+  epoch 12: loss 1682.6, dev CER 0.217, fleurs 0.200, reazon 0.246, 3467s
+eval eg2+reazon fleurs-test: CER 0.201 (training characters only; 0.1% of reference characters unseen)
+eval eg2+reazon fleurs-test: CER 0.201 (all 9679 characters of EG2's vocabulary)
+eval eg2+reazon: reader 7.5ms per 30s on mps
+eval eg2+reazon reazon-test: CER 0.238 (training characters only; 0.0% of reference characters unseen)
+eval eg2+reazon reazon-test: CER 0.234 on the 4677 clips whose sentence is not in ReazonSpeech train
+eval eg2+reazon reazon-test: CER 0.238 (all 9679 characters of EG2's vocabulary)
+eval eg2+reazon: reader 7.5ms per 30s on mps
+train eg2+reazon@0.25: 7.9M params, 17722 clips (32.23h; 6 left out), 48 epochs, 2552 characters seen in training, 9679 in EG2's vocabulary
+  epoch 6: loss 1142.2, dev CER 0.321, fleurs 0.296, reazon 0.365, 524s
+  epoch 12: loss 731.9, dev CER 0.266, fleurs 0.245, reazon 0.301, 1037s
+  epoch 18: loss 509.3, dev CER 0.252, fleurs 0.226, reazon 0.296, 1552s
+  epoch 24: loss 375.7, dev CER 0.244, fleurs 0.218, reazon 0.289, 2065s
+  epoch 30: loss 292.6, dev CER 0.242, fleurs 0.215, reazon 0.290, 2579s
+  epoch 36: loss 245.6, dev CER 0.237, fleurs 0.211, reazon 0.284, 3091s
+  epoch 42: loss 226.5, dev CER 0.237, fleurs 0.209, reazon 0.286, 3604s
+  epoch 48: loss 218.1, dev CER 0.236, fleurs 0.209, reazon 0.284, 4117s
+eval eg2+reazon@0.25 fleurs-test: CER 0.207 (training characters only; 0.2% of reference characters unseen)
+eval eg2+reazon@0.25 fleurs-test: CER 0.207 (all 9679 characters of EG2's vocabulary)
+eval eg2+reazon@0.25: reader 7.4ms per 30s on mps
+eval eg2+reazon@0.25 reazon-test: CER 0.282 (training characters only; 0.1% of reference characters unseen)
+eval eg2+reazon@0.25 reazon-test: CER 0.277 on the 4677 clips whose sentence is not in ReazonSpeech train
+eval eg2+reazon@0.25 reazon-test: CER 0.282 (all 9679 characters of EG2's vocabulary)
+eval eg2+reazon@0.25: reader 7.4ms per 30s on mps
+train free+reazon: 9.1M params, 64012 clips (107.02h; 26 left out), 12 epochs, 2978 characters seen in training, 9679 in EG2's vocabulary
+  epoch 1: loss 5396.2, dev CER 0.333, fleurs 0.319, reazon 0.356, 308s
+  epoch 2: loss 2987.4, dev CER 0.301, fleurs 0.275, reazon 0.347, 596s
+  epoch 3: loss 2523.6, dev CER 0.255, fleurs 0.237, reazon 0.287, 883s
+  epoch 4: loss 2250.1, dev CER 0.245, fleurs 0.221, reazon 0.287, 1171s
+  epoch 5: loss 2014.1, dev CER 0.237, fleurs 0.211, reazon 0.283, 1459s
+  epoch 6: loss 1804.8, dev CER 0.223, fleurs 0.206, reazon 0.253, 1746s
+  epoch 7: loss 1614.2, dev CER 0.217, fleurs 0.196, reazon 0.255, 2034s
+  epoch 8: loss 1429.0, dev CER 0.209, fleurs 0.190, reazon 0.243, 2321s
+  epoch 9: loss 1285.6, dev CER 0.205, fleurs 0.187, reazon 0.236, 2608s
+  epoch 10: loss 1167.4, dev CER 0.205, fleurs 0.188, reazon 0.236, 2895s
+  epoch 11: loss 1093.3, dev CER 0.203, fleurs 0.185, reazon 0.234, 3190s
+  epoch 12: loss 1062.2, dev CER 0.203, fleurs 0.185, reazon 0.235, 3478s
+eval free+reazon fleurs-test: CER 0.183 (training characters only; 0.1% of reference characters unseen)
+eval free+reazon: reader 7.2ms per 30s on mps
+eval free+reazon reazon-test: CER 0.231 (training characters only; 0.0% of reference characters unseen)
+eval free+reazon reazon-test: CER 0.227 on the 4677 clips whose sentence is not in ReazonSpeech train
+eval free+reazon: reader 7.1ms per 30s on mps
