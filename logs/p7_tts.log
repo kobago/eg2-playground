@@ -1,0 +1,50 @@
+mels fleurs-dev: 266 clips, 318158 frames
+mels fleurs-test: 650 clips, 798935 frames
+mels fleurs-train: 2292 clips, 2507206 frames
+train decoder: 16.1M params
+  epoch 10: dev L1 1.339, 735s
+  epoch 20: dev L1 1.155, 1468s
+  epoch 30: dev L1 1.201, 2201s
+  epoch 40: dev L1 1.196, 2933s
+  epoch 50: dev L1 1.161, 3665s
+  epoch 60: dev L1 1.160, 4396s
+  ref: 群島や湖では必ずしもヨットは必要ありません
+  hyp: 群島や湖では必ずしもヨットは必要ありません
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: セブリングボックにとっては5連敗が止まりました
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: スブリンボックにとっては5連敗が止まりました
+listen copy fleurs-test: Whisper CER 0.054 over 650 clips
+  vocos: 34ms per 30s (888x realtime)
+  ref: 群島や湖では必ずしもヨットは必要ありません
+  hyp: 群島や湖では必ずしもヨットは必要ありません
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: セブリンドバックにとってはこれぐらいかと思いました
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: スプリーンロックにとってはこれぐらいが止まりました
+listen decoder fleurs-test: Whisper CER 0.118 over 650 clips
+  decoder + vocos: 57ms per 30s (525x realtime)
+align fleurs-dev: 266 clips, 0 skipped, 6.35 tokens per character (start 65.6)
+align fleurs-test: 650 clips, 0 skipped, 6.27 tokens per character (start 64.3)
+align fleurs-train: 2292 clips, 0 skipped, 5.71 tokens per character (start 42.1)
+train tts: 14.7M params, 2292 clips
+  epoch 10: dev token L1 0.787, duration MSE 0.140, 280s
+  epoch 20: dev token L1 0.738, duration MSE 0.119, 548s
+  epoch 30: dev token L1 0.663, duration MSE 0.109, 816s
+  epoch 40: dev token L1 0.651, duration MSE 0.112, 1084s
+  epoch 50: dev token L1 0.647, duration MSE 0.108, 1352s
+  epoch 60: dev token L1 0.649, duration MSE 0.113, 1620s
+  ref: 群島や湖では必ずしもヨットは必要ありません
+  hyp: 文像や文字では質下ユットは必要ありません
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: ツーリングロックにとっては後全開が詰まりました
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: ツグリム国にとっては午前回が迫りました
+listen tts-oracle fleurs-test: Whisper CER 0.299 over 650 clips; 2.37h of speech made in 28s (307x realtime, clip by clip)
+  ref: 群島や湖では必ずしもヨットは必要ありません
+  hyp: 文章や古字ではしずしも与党は必要ありません
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: 次に文句にとっては法事宴会が閉まりました
+  ref: スブリングボックにとっては5連敗が止まりました
+  hyp: 次に文句にとっては法事宴会が閉まりました
+listen tts fleurs-test: Whisper CER 0.257 over 650 clips; 1.97h of speech made in 24s (296x realtime, clip by clip)
