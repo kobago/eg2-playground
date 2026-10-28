@@ -709,6 +709,11 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+app = [
+    { name = "fastapi" },
+    { name = "uvicorn" },
+    { name = "websockets" },
+]
 coreml = [
     { name = "coremltools" },
 ]
@@ -733,6 +738,11 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+app = [
+    { name = "fastapi", specifier = ">=0.162.0" },
+    { name = "uvicorn", specifier = ">=0.54.0" },
+    { name = "websockets", specifier = ">=17.3" },
+]
 coreml = [{ name = "coremltools", specifier = "==9.1.dev1" }]
 whisper = [{ name = "mlx-whisper", specifier = ">=0.4.3" }]
 

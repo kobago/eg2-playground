@@ -8,3 +8,4 @@ logs/*
 build/
 !logs/p5_coreml.log
 !logs/p6_stt.log
+!logs/p7_tts.log

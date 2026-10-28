@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EG2 音声デモ</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --text: #1d2330; --muted: #6b7385; --line: #e2e5eb;
+    --accent: #2f6fde; --accent-text: #fff; --open: #8a93a6; --stop: #d6453d; --bar: #2f6fde; --warn: #b26a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171d; --panel: #1d2129; --text: #e6e9ef; --muted: #959db0; --line: #2d323d;
+      --accent: #5b8ef0; --accent-text: #0d1220; --open: #7d869a; --stop: #f0645c; --bar: #5b8ef0; --warn: #e0a243;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+  .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; padding: 8px 14px; color: var(--muted); }
+  .tabs button.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  .sub { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
+  .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+  button {
+    font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    padding: 8px 18px; border-radius: 8px; cursor: pointer;
+  }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button.primary.recording { background: var(--stop); border-color: var(--stop); }
+  button:disabled { opacity: .5; cursor: default; }
+  .level { flex: 1; min-width: 120px; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .level > div { height: 100%; width: 0; background: var(--bar); transition: width .08s; }
+  .status { color: var(--muted); font-size: 13px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  #transcript { min-height: 180px; font-size: 18px; line-height: 1.8; white-space: pre-wrap; word-break: break-all; }
+  #transcript .open { color: var(--open); }
+  .placeholder { color: var(--muted); font-size: 15px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 12px; }
+  h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 14px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .big { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  .warn { color: var(--warn); font-size: 13px; }
+  textarea {
+    width: 100%; min-height: 110px; font: inherit; font-size: 17px; padding: 10px 12px; color: var(--text);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; resize: vertical;
+  }
+  audio { width: 100%; margin-top: 12px; }
+  .samples { margin-top: 12px; }
+  .sample { padding: 12px 0; border-top: 1px solid var(--line); }
+  .sample:first-of-type { border-top: 0; padding-top: 0; }
+  .sample p { margin: 0 0 8px; }
+  .players { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+  .players label { font-size: 12px; color: var(--muted); display: block; }
+  .players audio { margin-top: 2px; height: 36px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>EmbeddingGemma 2 音声デモ</h1>
+  <div class="tabs">
+    <button data-tab="stt" class="active">文字起こし（STT）</button>
+    <button data-tab="tts">読み上げ（TTS）</button>
+  </div>
+
+  <section id="tab-stt">
+    <p class="sub">音声エンコーダ: Core ML（Neural Engine） ／ 読み取り部分: <span id="reader-device">-</span>（REPORT.md 12・13章）</p>
+    <div class="controls">
+      <button id="start" class="primary">録音を開始</button>
+      <button id="reset">クリア</button>
+      <button id="save" title="サーバーが受け取った音声を build/stt_app/recordings/ に保存します">この音声を保存</button>
+      <div class="level"><div id="level"></div></div>
+      <span id="status" class="status">待機中</span>
+    </div>
+
+    <div class="panel"><div id="transcript"><span class="placeholder">「録音を開始」を押して話してください。灰色は確定前の区間で、話すたびに読み直されます。</span></div></div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>1回の読み取り（直近）</h2>
+        <div class="big" id="speed">-</div>
+        <dl>
+          <dt>特徴量（CPU）</dt><dd id="t-features">-</dd>
+          <dt>音声エンコーダ（Neural Engine）</dt><dd id="t-encoder">-</dd>
+          <dt>読み取り部分</dt><dd id="t-reader">-</dd>
+          <dt>合計</dt><dd id="t-total">-</dd>
+          <dt>読んだ区間の長さ</dt><dd id="seg">-</dd>
+          <dt>話してから表示までの遅れ</dt><dd id="lag">-</dd>
+          <dt>読み取りの回数</dt><dd id="passes">0</dd>
+        </dl>
+        <p class="note">エンコーダは毎回30秒ぶんの枠を計算するので、区間の長さによらずほぼ一定の時間です。倍速は「30秒 ÷ 合計時間」。</p>
+      </div>
+      <div class="panel memory">
+        <h2>メモリ（サーバーの Mac）</h2>
+        <div class="big" data-m="footprint">-</div>
+        <dl>
+          <dt>このプロセス（アクティビティモニタの「メモリ」）</dt><dd data-m="footprint">-</dd>
+          <dt>ピーク</dt><dd data-m="peak">-</dd>
+          <dt>常駐サイズ</dt><dd data-m="resident">-</dd>
+          <dt>Metal（GPU）</dt><dd data-m="mps">-</dd>
+          <dt>Mac 全体の使用中</dt><dd data-m="system">-</dd>
+        </dl>
+        <p class="note">STT と TTS の両方のモデルを読み込んだプロセス全体の値です。Neural Engine のドライバが別プロセスで持つ分は含みません。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-tts" hidden>
+    <p class="sub">文字ごとの EG2 テキスト埋め込み → EG2 の音声トークン → メルスペクトログラム → Vocos（<span id="tts-device">-</span>、REPORT.md 14章）。FLEURS の7.4時間で学習した試作です。</p>
+    <div class="panel">
+      <textarea id="tts-text">今日はオフ会当日ですけども、参加者は誰一人来ませんでした。</textarea>
+      <div class="controls" style="margin: 10px 0 0">
+        <button id="speak" class="primary">読み上げる</button>
+        <span id="tts-status" class="status"></span>
+      </div>
+      <div id="tts-unknown" class="warn" hidden></div>
+      <audio id="tts-audio" controls hidden></audio>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>生成の時間</h2>
+        <div class="big" id="tts-speed">-</div>
+        <dl>
+          <dt>テキスト → 音声トークン</dt><dd id="tt-tokens">-</dd>
+          <dt>音声トークン → メル</dt><dd id="tt-mel">-</dd>
+          <dt>メル → 波形（Vocos）</dt><dd id="tt-vocos">-</dd>
+          <dt>合計</dt><dd id="tt-total">-</dd>
+          <dt>作った音声の長さ</dt><dd id="tt-seconds">-</dd>
+          <dt>文の数 ／ 文字数</dt><dd id="tt-chars">-</dd>
+        </dl>
+        <p class="note">句読点は使わず、。！？と改行（長い文は、も）で区切って1文ずつ作り、0.25秒の無音でつなぎます。漢字の読みは与えていないので、読み間違えることがあります。</p>
+      </div>
+      <div class="panel memory">
+        <h2>メモリ（サーバーの Mac）</h2>
+        <div class="big" data-m="footprint">-</div>
+        <dl>
+          <dt>このプロセス</dt><dd data-m="footprint">-</dd>
+          <dt>ピーク</dt><dd data-m="peak">-</dd>
+          <dt>Metal（GPU）</dt><dd data-m="mps">-</dd>
+          <dt>Mac 全体の使用中</dt><dd data-m="system">-</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="panel samples">
+      <h2>聞き比べ（FLEURS の評価用。学習に使っていない話者と文）</h2>
+      <div id="samples"><span class="placeholder">読み込み中…</span></div>
+      <p class="note">学習データ（FLEURS の学習用）は2,292件のうち1,925件が女性の声です。TTS には話者を指定する入力がないため、学習データの声を平均したような声になります。</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const ms = (s) => `${(s * 1000).toFixed(0)} ms`;
+const mib = (b) => b >= 2 ** 30 ? `${(b / 2 ** 30).toFixed(2)} GB` : `${(b / 2 ** 20).toFixed(0)} MB`;
+const RATE = 16000, SEND_EVERY = 0.25;   // seconds of audio per message
+
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("active", x === b));
+  $("tab-stt").hidden = b.dataset.tab !== "stt";
+  $("tab-tts").hidden = b.dataset.tab !== "tts";
+});
+
+function showMemory(m) {
+  const values = {
+    footprint: mib(m.footprint), peak: mib(m.peak), resident: mib(m.resident),
+    mps: m.mps !== undefined ? mib(m.mps) : "-", system: `${mib(m.system_used)} / ${mib(m.system_total)}`,
+  };
+  document.querySelectorAll("[data-m]").forEach(el => el.textContent = values[el.dataset.m]);
+}
+
+fetch("info").then(r => r.json()).then(i => {
+  $("reader-device").textContent = i.reader_device.toUpperCase();
+  $("tts-device").textContent = i.tts ? (i.tts_device === "mps" ? "GPU" : "CPU") : "オフ";
+  if (!i.tts) $("speak").disabled = true;
+  showMemory(i.memory);
+});
+
+// ---- STT ----------------------------------------------------------------------------------------------------
+
+let ws, ctx, stream, node, pending = [], pendingLen = 0, sent = 0, sendTimes = [], passes = 0, resampler;
+
+function render(closed, open) {
+  const t = $("transcript");
+  t.textContent = closed;
+  const span = document.createElement("span");
+  span.className = "open";
+  span.textContent = open;
+  t.appendChild(span);
+}
+
+// Linear resampling to 16 kHz, for browsers that won't open a 16 kHz AudioContext.
+function makeResampler(from) {
+  if (from === RATE) return (x) => x;
+  let pos = 0, last = 0;
+  const step = from / RATE;
+  return (x) => {
+    const out = [];
+    for (; pos < x.length; pos += step) {
+      const i = Math.floor(pos), f = pos - i;
+      const a = i === 0 ? last : x[i - 1], b = x[i];
+      out.push(a + (b - a) * f);
+    }
+    pos -= x.length;
+    last = x[x.length - 1];
+    return Float32Array.from(out);
+  };
+}
+
+function onAudio(chunk) {
+  const x = resampler(chunk);
+  let peak = 0;
+  for (const v of x) peak = Math.max(peak, Math.abs(v));
+  $("level").style.width = `${Math.min(100, peak * 140)}%`;
+  pending.push(x);
+  pendingLen += x.length;
+  if (pendingLen < RATE * SEND_EVERY || ws.readyState !== WebSocket.OPEN) return;
+  const pcm = new Int16Array(pendingLen);
+  let o = 0;
+  for (const p of pending) for (const v of p) pcm[o++] = Math.max(-1, Math.min(1, v)) * 32767;
+  ws.send(pcm.buffer);
+  sent += pcm.length;
+  sendTimes.push([sent, performance.now()]);
+  pending = []; pendingLen = 0;
+}
+
+async function start() {
+  $("status").textContent = "接続中…";
+  ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`);
+  ws.onmessage = (e) => {
+    const r = JSON.parse(e.data);
+    if (r.saved) { $("status").textContent = `保存しました: ${r.saved}`; return; }
+    render(r.closed, r.open);
+    const t = r.timing;
+    $("speed").textContent = `${(30 / t.total).toFixed(0)} 倍速`;
+    $("t-features").textContent = ms(t.features);
+    $("t-encoder").textContent = ms(t.encoder);
+    $("t-reader").textContent = ms(t.reader);
+    $("t-total").textContent = ms(t.total);
+    $("seg").textContent = `${r.segment_seconds.toFixed(1)} 秒`;
+    $("passes").textContent = ++passes;
+    // When the newest audio in this result left the browser.
+    while (sendTimes.length > 1 && sendTimes[1][0] <= r.received) sendTimes.shift();
+    if (sendTimes.length && sendTimes[0][0] === r.received) $("lag").textContent = ms((performance.now() - sendTimes[0][1]) / 1000);
+    showMemory(r.memory);
+  };
+  ws.onclose = () => { if (ctx) stopMic(); $("status").textContent = "切断されました"; };
+  await new Promise((ok, fail) => { ws.onopen = ok; ws.onerror = () => fail(new Error("WebSocket に接続できません")); });
+
+  stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+  try { ctx = new AudioContext({ sampleRate: RATE }); } catch { ctx = new AudioContext(); }
+  const src = ctx.createMediaStreamSource(stream);
+  resampler = makeResampler(ctx.sampleRate);
+  const worklet = `registerProcessor("tap", class extends AudioWorkletProcessor {
+    process(inputs) { const c = inputs[0][0]; if (c) this.port.postMessage(c.slice(0)); return true; } });`;
+  await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([worklet], { type: "text/javascript" })));
+  node = new AudioWorkletNode(ctx, "tap");
+  node.port.onmessage = (e) => onAudio(e.data);
+  src.connect(node);
+  $("start").textContent = "録音を停止";
+  $("start").classList.add("recording");
+  $("status").textContent = `録音中（ブラウザ ${ctx.sampleRate} Hz → 16 kHz）`;
+}
+
+// Stops the microphone but keeps the connection, so the recording can still be saved.
+function stopMic() {
+  node?.disconnect();
+  stream?.getTracks().forEach(t => t.stop());
+  ctx?.close();
+  ctx = null;
+  $("level").style.width = "0";
+  $("start").textContent = "録音を開始";
+  $("start").classList.remove("recording");
+  $("status").textContent = "停止中";
+}
+
+$("start").onclick = () => {
+  if (ctx) return stopMic();
+  ws?.close();
+  sent = 0; sendTimes = [];
+  start().catch(e => { stopMic(); ws?.close(); $("status").textContent = `開始できません: ${e.message}`; });
+};
+$("reset").onclick = () => {
+  if (ws?.readyState === WebSocket.OPEN) ws.send("reset");
+  sent = 0; sendTimes = [];
+  $("transcript").textContent = "";
+  passes = 0; $("passes").textContent = 0;
+};
+$("save").onclick = () => {
+  if (ws?.readyState === WebSocket.OPEN) ws.send("save");
+  else $("status").textContent = "保存できる音声がありません（録音中か、停止した直後に押してください）";
+};
+
+// ---- TTS ----------------------------------------------------------------------------------------------------
+
+$("speak").onclick = async () => {
+  $("speak").disabled = true;
+  $("tts-status").textContent = "生成中…";
+  try {
+    const r = await fetch("tts", { method: "POST", headers: { "Content-Type": "application/json" },
+                                   body: JSON.stringify({ text: $("tts-text").value }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail);
+    const t = j.timing;
+    $("tts-speed").textContent = `${(j.seconds / t.total).toFixed(0)} 倍速`;
+    $("tt-tokens").textContent = ms(t.tokens);
+    $("tt-mel").textContent = ms(t.mel);
+    $("tt-vocos").textContent = ms(t.vocos);
+    $("tt-total").textContent = ms(t.total);
+    $("tt-seconds").textContent = `${j.seconds.toFixed(1)} 秒`;
+    $("tt-chars").textContent = `${j.sentences.length} ／ ${j.sentences.join("").length}`;
+    $("tts-unknown").hidden = !j.unknown.length;
+    $("tts-unknown").textContent = `EG2 の1文字トークンにない文字（読めません）: ${j.unknown.join(" ")}`;
+    const audio = $("tts-audio");
+    audio.src = `data:audio/wav;base64,${j.audio}`;
+    audio.hidden = false;
+    audio.play().catch(() => {});
+    showMemory(j.memory);
+    $("tts-status").textContent = "";
+  } catch (e) {
+    $("tts-status").textContent = `生成できません: ${e.message}`;
+  } finally {
+    $("speak").disabled = false;
+  }
+};
+
+const KINDS = {
+  "orig": "元の音声", "copy": "Vocos だけ通す", "decoder": "EG2 の音声トークンから",
+  "tts-oracle": "TTS（長さは元の音声）", "tts": "TTS（テキストだけ）",
+};
+fetch("samples").then(r => r.json()).then(list => {
+  const box = $("samples");
+  box.textContent = list.length ? "" : "サンプルがありません（p7_tts.py listen を実行すると作られます）";
+  for (const s of list) {
+    const div = document.createElement("div");
+    div.className = "sample";
+    const p = document.createElement("p");
+    p.textContent = s.text;
+    const players = document.createElement("div");
+    players.className = "players";
+    for (const [kind, label] of Object.entries(KINDS)) {
+      if (!s.files[kind]) continue;
+      const cell = document.createElement("div");
+      const l = document.createElement("label");
+      l.textContent = label;
+      const a = document.createElement("audio");
+      a.controls = true; a.preload = "none"; a.src = `samples/${s.files[kind]}`;
+      cell.append(l, a);
+      players.append(cell);
+    }
+    div.append(p, players);
+    box.append(div);
+  }
+});
+</script>
+</body>
+</html>
