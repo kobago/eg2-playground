@@ -79,3 +79,61 @@ whisper reazon-test: CER 0.156, 3846s for 8.59h (8x realtime, clip by clip)
   ref: 大橋さんはやっぱり大変でしたか
   hyp: お噂はやっぱり大変でしたか
 whisper: 1458ms per 30s (21x realtime)
+train eg2@0.125: 7.9M params, 286 clips (0.90h), 640 epochs, 1166 characters seen in training, 9679 in EG2's vocabulary
+  epoch 80: loss 9.1, dev CER 0.369, 207s
+  epoch 160: loss 6.5, dev CER 0.362, 421s
+  epoch 240: loss 4.8, dev CER 0.367, 634s
+  epoch 320: loss 3.8, dev CER 0.363, 833s
+  epoch 400: loss 2.5, dev CER 0.364, 1026s
+  epoch 480: loss 2.0, dev CER 0.359, 1226s
+  epoch 560: loss 1.5, dev CER 0.364, 1425s
+  epoch 640: loss 1.5, dev CER 0.365, 1632s
+eval eg2@0.125 fleurs-test: CER 0.353 (training characters only; 3.4% of reference characters unseen)
+eval eg2@0.125 fleurs-test: CER 0.353 (all 9679 characters of EG2's vocabulary)
+eval eg2@0.125: reader 7.1ms per 30s on mps
+eval eg2@0.125 reazon-test: CER 0.573 (training characters only; 4.4% of reference characters unseen)
+eval eg2@0.125 reazon-test: CER 0.573 (all 9679 characters of EG2's vocabulary)
+eval eg2@0.125: reader 7.1ms per 30s on mps
+train eg2@0.25: 7.9M params, 573 clips (1.85h), 320 epochs, 1413 characters seen in training, 9679 in EG2's vocabulary
+  epoch 40: loss 24.4, dev CER 0.318, 202s
+  epoch 80: loss 15.0, dev CER 0.322, 403s
+  epoch 120: loss 12.8, dev CER 0.324, 602s
+  epoch 160: loss 10.9, dev CER 0.316, 802s
+  epoch 200: loss 9.4, dev CER 0.315, 1003s
+  epoch 240: loss 7.7, dev CER 0.321, 1204s
+  epoch 280: loss 6.8, dev CER 0.319, 1404s
+  epoch 320: loss 6.9, dev CER 0.316, 1604s
+eval eg2@0.25 fleurs-test: CER 0.312 (training characters only; 1.7% of reference characters unseen)
+eval eg2@0.25 fleurs-test: CER 0.312 (all 9679 characters of EG2's vocabulary)
+eval eg2@0.25: reader 7.2ms per 30s on mps
+eval eg2@0.25 reazon-test: CER 0.539 (training characters only; 2.8% of reference characters unseen)
+eval eg2@0.25 reazon-test: CER 0.539 (all 9679 characters of EG2's vocabulary)
+eval eg2@0.25: reader 7.2ms per 30s on mps
+train eg2@0.5: 7.9M params, 1146 clips (3.74h), 160 epochs, 1610 characters seen in training, 9679 in EG2's vocabulary
+  epoch 20: loss 68.9, dev CER 0.300, 210s
+  epoch 40: loss 37.3, dev CER 0.285, 417s
+  epoch 60: loss 30.1, dev CER 0.276, 616s
+  epoch 80: loss 26.2, dev CER 0.273, 818s
+  epoch 100: loss 23.6, dev CER 0.273, 1019s
+  epoch 120: loss 20.7, dev CER 0.272, 1219s
+  epoch 140: loss 19.2, dev CER 0.267, 1419s
+  epoch 160: loss 19.2, dev CER 0.268, 1620s
+eval eg2@0.5 fleurs-test: CER 0.265 (training characters only; 0.9% of reference characters unseen)
+eval eg2@0.5 fleurs-test: CER 0.265 (all 9679 characters of EG2's vocabulary)
+eval eg2@0.5: reader 7.2ms per 30s on mps
+eval eg2@0.5 reazon-test: CER 0.512 (training characters only; 1.9% of reference characters unseen)
+eval eg2@0.5 reazon-test: CER 0.512 (all 9679 characters of EG2's vocabulary)
+eval eg2@0.5: reader 7.2ms per 30s on mps
+train free@0.125: 8.2M params, 286 clips (0.90h), 640 epochs, 1166 characters seen in training, 9679 in EG2's vocabulary
+  epoch 80: loss 5.3, dev CER 0.386, 194s
+  epoch 160: loss 3.7, dev CER 0.376, 388s
+  epoch 240: loss 2.6, dev CER 0.383, 578s
+  epoch 320: loss 2.2, dev CER 0.380, 765s
+  epoch 400: loss 1.2, dev CER 0.377, 953s
+  epoch 480: loss 0.9, dev CER 0.374, 1151s
+  epoch 560: loss 0.6, dev CER 0.376, 1343s
+  epoch 640: loss 0.5, dev CER 0.376, 1531s
+eval free@0.125 fleurs-test: CER 0.364 (training characters only; 3.4% of reference characters unseen)
+eval free@0.125: reader 6.8ms per 30s on mps
+eval free@0.125 reazon-test: CER 0.577 (training characters only; 4.4% of reference characters unseen)
+eval free@0.125: reader 6.8ms per 30s on mps

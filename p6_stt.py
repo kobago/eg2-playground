@@ -2,8 +2,8 @@
 
 uv run python p6_stt.py features {fleurs-train,fleurs-dev,fleurs-test,reazon-test}
 uv run python p6_stt.py zeroshot fleurs-dev
-uv run python p6_stt.py train {eg2,free}
-uv run python p6_stt.py eval {eg2,free} {fleurs-test,reazon-test}
+uv run python p6_stt.py train {eg2,free} [fraction]       # e.g. 0.25: a quarter of the clips (REPORT 16, how far data helps)
+uv run python p6_stt.py eval {eg2,free}[@fraction] {fleurs-test,reazon-test}
 uv run --group whisper python p6_stt.py whisper {fleurs-test,reazon-test}
 """
 
@@ -206,10 +206,18 @@ def time_mask(x, lengths, spans=2, width=0.1):
     return x
 
 
-def train(head, epochs=80):
+def train(head, fraction="1"):
+    """fraction < 1 trains on that share of the clips (picked at random), for as many steps as the full set gets in
+    80 epochs, so that only the amount of data differs. It is saved as reader_{head}@{fraction}.pt."""
+    fraction = float(fraction)
+    name = head if fraction == 1 else f"{head}@{fraction:g}"
+    epochs = round(80 / fraction)
     torch.manual_seed(0)
     random.seed(0)
     _, train_text, train_tok = load_split("fleurs-train")
+    if fraction < 1:
+        keep = sorted(random.Random(0).sample(range(len(train_tok)), round(len(train_tok) * fraction)))
+        train_text, train_tok = [train_text[i] for i in keep], [train_tok[i] for i in keep]
     _, dev_text, dev_tok = load_split("fleurs-dev")
     all_chars, all_emb = char_table()
     seen = sorted(set("".join(train_text)))
@@ -219,7 +227,9 @@ def train(head, epochs=80):
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=1e-3, weight_decay=0.01)
     steps = epochs * sum(1 for _ in batches(train_tok, train_text))
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=1e-3, total_steps=steps, pct_start=0.1)
-    print(f"train {head}: {sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.1f}M params, "
+    hours = sum(len(t) for t in train_tok) / 25 / 3600
+    print(f"train {name}: {sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.1f}M params, "
+          f"{len(train_tok)} clips ({hours:.2f}h), {epochs} epochs, "
           f"{len(seen)} characters seen in training, {len(all_chars)} in EG2's vocabulary")
     best, start = 1e9, time.perf_counter()
     for epoch in range(epochs):
@@ -236,12 +246,12 @@ def train(head, epochs=80):
             opt.step()
             sched.step()
             total += loss.item()
-        if epoch % 10 == 9 or epoch == epochs - 1:
+        if (epoch + 1) % (epochs // 8) == 0 or epoch == epochs - 1:
             cer = evaluate(model, dev_tok, dev_text, seen)[0]
             print(f"  epoch {epoch + 1}: loss {total:.1f}, dev CER {cer:.3f}, {time.perf_counter() - start:.0f}s")
             if cer < best:
                 best = cer
-                torch.save({"state": model.state_dict(), "seen": seen}, OUT / f"reader_{head}.pt")
+                torch.save({"state": model.state_dict(), "seen": seen}, OUT / f"reader_{name}.pt")
 
 
 def greedy(logits, lengths, chars):
@@ -278,8 +288,9 @@ def evaluate(model, tokens, texts, chars, emb=None):
     return errors / sum(len(t) for t in texts), hyps
 
 
-def run_eval(head, split):
-    ckpt = torch.load(OUT / f"reader_{head}.pt")
+def run_eval(name, split):
+    head = name.split("@")[0]
+    ckpt = torch.load(OUT / f"reader_{name}.pt")
     seen = ckpt["seen"]
     all_chars, all_emb = char_table()
     model = Reader(head, len(seen), all_emb[[all_chars.index(c) for c in seen]] if head == "eg2" else None).to(DEVICE)
@@ -287,10 +298,10 @@ def run_eval(head, split):
     _, texts, tokens = load_split(split)
     unseen = sum(c not in set(seen) for t in texts for c in t) / sum(len(t) for t in texts)
     cer, hyps = evaluate(model, tokens, texts, seen)
-    print(f"eval {head} {split}: CER {cer:.3f} (training characters only; {unseen:.1%} of reference characters unseen)")
+    print(f"eval {name} {split}: CER {cer:.3f} (training characters only; {unseen:.1%} of reference characters unseen)")
     if head == "eg2":
         cer_all, _ = evaluate(model, tokens, texts, all_chars, F.normalize(all_emb, dim=-1).to(DEVICE))
-        print(f"eval {head} {split}: CER {cer_all:.3f} (all {len(all_chars)} characters of EG2's vocabulary)")
+        print(f"eval {name} {split}: CER {cer_all:.3f} (all {len(all_chars)} characters of EG2's vocabulary)")
     for h, t in list(zip(hyps, texts))[:3]:
         print(f"  ref: {t}\n  hyp: {h}")
     # Reader speed on 30 s of audio tokens (750), after the encoder (REPORT.md 12章: 98 ms on the Neural Engine).
@@ -302,7 +313,7 @@ def run_eval(head, split):
         while time.perf_counter() - t < 3:
             model(x).argmax(-1).cpu()
             n += 1
-    print(f"eval {head}: reader {(time.perf_counter() - t) / n * 1000:.1f}ms per 30s on {DEVICE}")
+    print(f"eval {name}: reader {(time.perf_counter() - t) / n * 1000:.1f}ms per 30s on {DEVICE}")
 
 
 def zeroshot(split):
