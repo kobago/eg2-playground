@@ -620,3 +620,36 @@ eg2 は EG2 のテキスト空間を使う読み取り部分、free は通常の
 uv run python p6_stt.py train eg2 0.25          # build/stt/reader_eg2@0.25.pt
 uv run python p6_stt.py eval eg2@0.25 fleurs-test
 ```
+
+## 17. STTに話し言葉のデータを足す: ReazonSpeech 100時間
+
+16章で、FLEURS（読み上げ文）を増やしても ReazonSpeech（テレビの話し言葉）は伸びが鈍いとわかりました。そこで、ReazonSpeech の100時間（small、62,047件。`japanese-asr/whisper_transcriptions.reazonspeech.small` の parquet 版）を FLEURS の学習データに足しました。
+
+- 音声エンコーダはこれまでどおり固定で、学習するのは読み取り部分だけです。特徴量は parquet 1ファイルごとに作ります（全部で約45分、9.2GB）。
+- 評価用の ReazonSpeech とは、ファイル名でも音声のバイト列でも重なっていません。ただ、評価用5,263件のうち526件は、学習データにまったく同じ文があります（繰り返し流れるテレビCMなど）。この526件を除いた CER も出しました。
+- 学習から外したもの: 読めない音声1件（`00a/cd6fd726264c3.flac`）、EG2 の1文字トークンにない文字を含む件と、文字のない件（合わせて26件）。300件は学習中の検証用に取り分けました。
+- 全量は12エポック（約58分）。25% は同じ総ステップ数になるよう48エポックです。学習中のプロセスは約15GBのメモリを使います（特徴量をすべてメモリに載せるため）。
+
+| 学習データ | 読み取り部分 | FLEURS 評価用 CER | ReazonSpeech CER | ReazonSpeech（同じ文を除く） |
+|---|---|---|---|---|
+| FLEURS 7.4時間 | eg2 | 22.8% | 49.4% | 48.0% |
+| ＋ReazonSpeech 25時間 | eg2 | 20.7% | 28.2% | 27.7% |
+| ＋ReazonSpeech 100時間 | eg2 | 20.1% | 23.8% | 23.4% |
+| ＋ReazonSpeech 100時間 | free | **18.3%** | **23.1%** | **22.7%** |
+| （参考）Whisper large-v3-turbo | | 5.2% | 15.6% | |
+
+- **話し言葉のデータは効く。** 25時間を足すだけで、ReazonSpeech の CER は49%から28%に下がりました。100時間ではさらに4ポイント下がり、23%台です。同じ文を除いても差は0.4〜0.5ポイントで、文の丸暗記による上乗せはわずかです。
+- **読み上げ文も少し良くなる。** FLEURS は 22.8% → 20.1%（eg2）でした。分野の違うデータでも足を引っ張りませんでした。
+- **データが多いと、EG2 のテキスト空間を使う利点はなくなる。** 100時間では、通常の CTC（free）のほうが FLEURS で1.8ポイント、ReazonSpeech で0.7ポイント良くなりました。16章のとおり、eg2 の利点はデータが少ないときにわずかにあるだけです。
+- **まだ学習しきれていない。** どちらも最後のエポックまで検証用の CER が少しずつ下がっていました。エポックを増やすと、もう少し伸びる見込みです。
+- **Whisper との差は残る。** ReazonSpeech でまだ7〜8ポイント、FLEURS では13ポイントの差があります。読み取り部分は約800万パラメータで、言語モデルもありません。誤りの多くは同じ読みの漢字の取り違えです。これ以上縮めるには、データを足すより、読み取り部分を大きくするか言語モデルを組み合わせる必要がありそうです。
+
+```bash
+hf download japanese-asr/whisper_transcriptions.reazonspeech.small --repo-type dataset --include "small/*"   # 7.0GB
+
+uv run python p6_stt.py features reazon-train        # build/stt/reazon-train-00.npz ... -14.npz
+uv run python p6_stt.py train free 1 reazon          # build/stt/reader_free+reazon.pt（25% は train eg2 0.25 reazon）
+uv run python p6_stt.py eval free+reazon reazon-test
+```
+
+ReazonSpeech の音声は、著作権法30条の4（情報解析）の範囲で使える条件です。このリポジトリには音声も特徴量も含めていません。

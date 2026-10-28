@@ -1,9 +1,10 @@
 """Japanese speech-to-text on a frozen EG2 audio encoder (REPORT.md 13章).
 
-uv run python p6_stt.py features {fleurs-train,fleurs-dev,fleurs-test,reazon-test}
+uv run python p6_stt.py features {fleurs-train,fleurs-dev,fleurs-test,reazon-test,reazon-train}
 uv run python p6_stt.py zeroshot fleurs-dev
 uv run python p6_stt.py train {eg2,free} [fraction]       # e.g. 0.25: a quarter of the clips (REPORT 16, how far data helps)
-uv run python p6_stt.py eval {eg2,free}[@fraction] {fleurs-test,reazon-test}
+uv run python p6_stt.py train {eg2,free} [fraction] reazon   # plus ReazonSpeech's 100 hours (REPORT 17)
+uv run python p6_stt.py eval {eg2,free}[+reazon][@fraction] {fleurs-test,reazon-test}
 uv run --group whisper python p6_stt.py whisper {fleurs-test,reazon-test}
 """
 
@@ -72,11 +73,33 @@ def reazon_test():
             yield f"{Path(path).stem}-{i}", audio[: 16000 * 30], row["transcription"]
 
 
+def reazon_train_files():
+    """ReazonSpeech's 100-hour "small" set, as parquet (japanese-asr/whisper_transcriptions.reazonspeech.small)."""
+    return sorted(glob.glob(str(HUB / "datasets--japanese-asr--whisper_transcriptions.reazonspeech.small/snapshots/*/small/*.parquet")))
+
+
+def reazon_train(path):
+    import pyarrow.parquet as pq
+
+    for row in pq.read_table(path, columns=["name", "audio", "transcription"]).to_pylist():
+        try:
+            audio, sr = sf.read(io.BytesIO(row["audio"]["bytes"]), dtype="float32")
+        except sf.LibsndfileError:   # one clip in the set (00a/cd6fd726264c3.flac) does not decode
+            print(f"skipped {row['name']}: not readable")
+            continue
+        assert sr == 16000
+        if audio.ndim > 1:
+            audio = audio.mean(1)
+        yield row["name"], audio[: 16000 * 30], row["transcription"]
+
+
 SOURCES = {
     "fleurs-train": lambda: fleurs("train"),
     "fleurs-dev": lambda: fleurs("dev"),
     "fleurs-test": lambda: fleurs("test"),
     "reazon-test": reazon_test,
+    # 100 hours of audio does not fit in memory at once: one shard per parquet file (reazon-train-00, ...).
+    **{f"reazon-train-{i:02}": (lambda p=p: reazon_train(p)) for i, p in enumerate(reazon_train_files())},
 }
 
 
@@ -85,6 +108,12 @@ SOURCES = {
 def features(name):
     """Runs the frozen audio encoder over a dataset and saves its tokens (25 per second, 512-d, EG2's text space)."""
     from sentence_transformers import SentenceTransformer
+
+    if name == "reazon-train":
+        for shard in sorted(k for k in SOURCES if k.startswith("reazon-train-")):
+            if not (OUT / f"{shard}.npz").exists():   # resumable
+                features(shard)
+        return
 
     m = SentenceTransformer(EG2, device=DEVICE, config_kwargs={"vision_config": None},
                             model_kwargs={"dtype": torch.float32})
@@ -109,11 +138,22 @@ def features(name):
 
 
 def load_split(name):
+    if name == "reazon-train":
+        shards = [load_split(Path(p).stem) for p in sorted(glob.glob(str(OUT / "reazon-train-*.npz")))]
+        return tuple([x for s in shards for x in s[k]] for k in range(3))
     d = np.load(OUT / f"{name}.npz")
     all_tokens = d["tokens"]   # each d[...] reads the array out of the file again: read it once
     bounds = np.concatenate([[0], np.cumsum(d["lengths"])])
     tokens = [all_tokens[a:b] for a, b in pairwise(bounds)]
     return list(d["ids"]), [normalize(t) for t in d["texts"]], tokens
+
+
+def reazon_split():
+    """ReazonSpeech train minus 300 clips held out for dev (the same ones every run): (train, dev), each (texts, tokens)."""
+    _, texts, tokens = load_split("reazon-train")
+    dev = set(random.Random(1).sample(range(len(texts)), 300))
+    train = [i for i in range(len(texts)) if i not in dev]
+    return ([texts[i] for i in train], [tokens[i] for i in train]), ([texts[i] for i in sorted(dev)], [tokens[i] for i in sorted(dev)])
 
 
 # ---- the reader -------------------------------------------------------------------------------------------------
@@ -206,20 +246,40 @@ def time_mask(x, lengths, spans=2, width=0.1):
     return x
 
 
-def train(head, fraction="1"):
-    """fraction < 1 trains on that share of the clips (picked at random), for as many steps as the full set gets in
-    80 epochs, so that only the amount of data differs. It is saved as reader_{head}@{fraction}.pt."""
+def train(head, fraction="1", extra=None):
+    """fraction < 1 trains on that share of the clips (picked at random), for as many steps as the full set gets, so
+    that only the amount of data differs. It is saved as reader_{head}@{fraction}.pt.
+
+    extra="reazon" adds ReazonSpeech's 100 hours to all of FLEURS train, and fraction then picks from ReazonSpeech.
+    The full set gets 12 epochs: 14 times the data, so a similar number of steps per clip would take days.
+    It is saved as reader_{head}+reazon@{fraction}.pt; dev is FLEURS dev plus 300 held-out ReazonSpeech clips."""
     fraction = float(fraction)
-    name = head if fraction == 1 else f"{head}@{fraction:g}"
-    epochs = round(80 / fraction)
+    name = head + (f"+{extra}" if extra else "") + ("" if fraction == 1 else f"@{fraction:g}")
+    epochs = round((12 if extra else 80) / fraction)
     torch.manual_seed(0)
     random.seed(0)
     _, train_text, train_tok = load_split("fleurs-train")
-    if fraction < 1:
-        keep = sorted(random.Random(0).sample(range(len(train_tok)), round(len(train_tok) * fraction)))
-        train_text, train_tok = [train_text[i] for i in keep], [train_tok[i] for i in keep]
     _, dev_text, dev_tok = load_split("fleurs-dev")
+    more_text, more_tok = [], []
+    if extra == "reazon":
+        (more_text, more_tok), (rdev_text, rdev_tok) = reazon_split()
+        dev_text, dev_tok = dev_text + rdev_text, dev_tok + rdev_tok
+    elif extra:
+        raise SystemExit(f"unknown extra data: {extra}")
+    if fraction < 1:
+        if extra:
+            keep = sorted(random.Random(0).sample(range(len(more_tok)), round(len(more_tok) * fraction)))
+            more_text, more_tok = [more_text[i] for i in keep], [more_tok[i] for i in keep]
+        else:
+            keep = sorted(random.Random(0).sample(range(len(train_tok)), round(len(train_tok) * fraction)))
+            train_text, train_tok = [train_text[i] for i in keep], [train_tok[i] for i in keep]
     all_chars, all_emb = char_table()
+    # Clips with a character outside EG2's single-character tokens (rare kanji, symbols) or with no text at all:
+    # left out of training, for both heads alike.
+    vocab = set(all_chars)
+    pairs = [(t, x) for t, x in zip(train_text + more_text, train_tok + more_tok) if t and set(t) <= vocab]
+    dropped = len(train_tok) + len(more_tok) - len(pairs)
+    train_text, train_tok = [t for t, _ in pairs], [x for _, x in pairs]
     seen = sorted(set("".join(train_text)))
     index = {c: i + 1 for i, c in enumerate(seen)}   # 0 is the blank
     emb = all_emb[[all_chars.index(c) for c in seen]] if head == "eg2" else None
@@ -229,7 +289,7 @@ def train(head, fraction="1"):
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=1e-3, total_steps=steps, pct_start=0.1)
     hours = sum(len(t) for t in train_tok) / 25 / 3600
     print(f"train {name}: {sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.1f}M params, "
-          f"{len(train_tok)} clips ({hours:.2f}h), {epochs} epochs, "
+          f"{len(train_tok)} clips ({hours:.2f}h; {dropped} left out), {epochs} epochs, "
           f"{len(seen)} characters seen in training, {len(all_chars)} in EG2's vocabulary")
     best, start = 1e9, time.perf_counter()
     for epoch in range(epochs):
@@ -247,8 +307,11 @@ def train(head, fraction="1"):
             sched.step()
             total += loss.item()
         if (epoch + 1) % (epochs // 8) == 0 or epoch == epochs - 1:
-            cer = evaluate(model, dev_tok, dev_text, seen)[0]
-            print(f"  epoch {epoch + 1}: loss {total:.1f}, dev CER {cer:.3f}, {time.perf_counter() - start:.0f}s")
+            cer, hyps = evaluate(model, dev_tok, dev_text, seen)
+            n = len(dev_text) - 300   # with extra data, FLEURS dev comes first and ReazonSpeech's 300 clips last
+            parts = f", fleurs {corpus_cer(hyps[:n], dev_text[:n]):.3f}, reazon {corpus_cer(hyps[n:], dev_text[n:]):.3f}"
+            print(f"  epoch {epoch + 1}: loss {total:.1f}, dev CER {cer:.3f}{parts if extra else ''}, "
+                  f"{time.perf_counter() - start:.0f}s")
             if cer < best:
                 best = cer
                 torch.save({"state": model.state_dict(), "seen": seen}, OUT / f"reader_{name}.pt")
@@ -284,12 +347,15 @@ def evaluate(model, tokens, texts, chars, emb=None):
         for g, x, lengths, _ in batches(tokens, texts, shuffle=False):
             for i, h in zip(g, greedy(model(x.to(DEVICE), emb), lengths, chars)):
                 hyps[i] = h
-    errors = sum(edit_distance(h, t) for h, t in zip(hyps, texts))
-    return errors / sum(len(t) for t in texts), hyps
+    return corpus_cer(hyps, texts), hyps
+
+
+def corpus_cer(hyps, texts):
+    return sum(edit_distance(h, t) for h, t in zip(hyps, texts)) / sum(len(t) for t in texts)
 
 
 def run_eval(name, split):
-    head = name.split("@")[0]
+    head = name.split("@")[0].split("+")[0]
     ckpt = torch.load(OUT / f"reader_{name}.pt")
     seen = ckpt["seen"]
     all_chars, all_emb = char_table()
@@ -299,6 +365,12 @@ def run_eval(name, split):
     unseen = sum(c not in set(seen) for t in texts for c in t) / sum(len(t) for t in texts)
     cer, hyps = evaluate(model, tokens, texts, seen)
     print(f"eval {name} {split}: CER {cer:.3f} (training characters only; {unseen:.1%} of reference characters unseen)")
+    if split == "reazon-test" and glob.glob(str(OUT / "reazon-train-*.npz")):
+        # TV commercials air again and again: 526 test sentences are in ReazonSpeech train word for word.
+        seen_text = {normalize(t) for p in glob.glob(str(OUT / "reazon-train-*.npz")) for t in np.load(p)["texts"]}
+        new = [i for i, t in enumerate(texts) if t not in seen_text]
+        print(f"eval {name} {split}: CER {corpus_cer([hyps[i] for i in new], [texts[i] for i in new]):.3f} "
+              f"on the {len(new)} clips whose sentence is not in ReazonSpeech train")
     if head == "eg2":
         cer_all, _ = evaluate(model, tokens, texts, all_chars, F.normalize(all_emb, dim=-1).to(DEVICE))
         print(f"eval {name} {split}: CER {cer_all:.3f} (all {len(all_chars)} characters of EG2's vocabulary)")
